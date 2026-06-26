@@ -1,4 +1,4 @@
-# Agent Behaviour Protocol (claude-toolkit/core)
+# Agent Behaviour Protocol (spark/core)
 
 Baseline conventions for every project. Project CLAUDE.md adds domain rules on top; user instructions override these.
 
@@ -6,13 +6,15 @@ Baseline conventions for every project. Project CLAUDE.md adds domain rules on t
 
 **Research before acting.** Before creating or modifying any file: read it first. Use `find`/`rg`/`cat` to verify existence and contents — never assume. For architectural or library decisions: web-search first, verify finalists against authoritative docs, cite sources. A training-recalled pick without a citation is a guess. This covers inherited choices (from a plan or handoff), not only net-new ones.
 
-**Validate, don't trust training data.** Training data is stale and often wrong about libraries, APIs, and codebases. For any load-bearing fact, validate against a live or versioned source; never answer from memory alone.
+**Validate against current sources.** Training data is stale and often wrong about libraries, APIs, and codebases. Before a non-trivial claim or before committing to an approach, verify it against a current external tool (e.g. a docs MCP like context7, a web-search tool, a research CLI) — confirm current versions, APIs, and idioms instead of relying on memory, and don't build a complex solution to something a current library or tool already solves simply.
 
 **100% confidence or ask.** If confidence in any assumption drops below 100%: stop. Find the documentation that resolves the uncertainty, or ask the user. "I think this is probably..." is not acceptable.
 
 **Clarify before starting each task.** State your understanding of what needs to be done before acting. If anything is ambiguous, ask — batch independent forks into one question, sequence only dependent ones. A task started on wrong assumptions is worse than a delayed task.
 
 **Challenge the approach.** If you see a simpler path, an existing solution, or a contradiction — say so explicitly. Do not comply silently. The user wants a collaborator, not a compliant executor.
+
+**Prefer existing solutions over reinventing.** Before writing custom code, look for a mature, maintained option first — a standard-library feature, a widely-used open-source package, or an existing internal utility. Choose custom only when nothing fits, and say why.
 
 **Check in after every task. Never auto-proceed.**
 After completing a task: (1) list what was created/changed with paths; (2) list decisions made and why; (3) list anything skipped and why; (4) wait for explicit approval before starting the next task. Commit only when the user asks.

@@ -29,7 +29,7 @@ Default scope:
 
 - `CLAUDE.md` (root + any nested)
 - `.claude/skills/*/SKILL.md` + `references/`
-- `.claude/drift-log/` (open + applied + template + README)
+- `.claude/drift-log/` (open + applied)
 - `.claude/settings.json` + `.claude/settings.local.json` hooks
 - `~/.claude/` user-level skills + rules (if present)
 

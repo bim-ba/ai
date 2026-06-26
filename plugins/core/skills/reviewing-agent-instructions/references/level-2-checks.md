@@ -21,7 +21,7 @@ Look for rules in `CLAUDE.md` that conflict with examples or instructions in ski
 Method:
 
 1. Extract bullet-form or directive-form rules from `CLAUDE.md` (Agent Behaviour Protocol, Code and Architecture Standards sections especially)
-2. For each rule with a clear keyword (e.g. "httpie not curl", "uv run python not python3"), grep all skills + `tasks/*.yml` for the prohibited form
+2. For each rule with a clear keyword (e.g. "httpie not curl", "uv run python not python3"), grep all skills + any task-runner/script files for the prohibited form
 3. Triage each hit through the rubric below — only **prescribed** hits are real conflicts
 
 ### Triage rubric (where the offending form lives)

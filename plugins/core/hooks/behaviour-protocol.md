@@ -1,4 +1,4 @@
-# Agent Behaviour Protocol (spark/core)
+# Agent Behaviour Protocol (ai/core)
 
 Baseline conventions for every project. Project CLAUDE.md adds domain rules on top; user instructions override these.
 

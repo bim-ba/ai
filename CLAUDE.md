@@ -1,17 +1,17 @@
-# spark
+# ai
 
-> Baseline agent behavior is injected each session by `spark/core` via its SessionStart hook (`plugins/core/hooks/behaviour-protocol.md`). This file adds rules specific to developing the marketplace itself.
+> Baseline agent behavior is injected each session by `ai/core` via its SessionStart hook (`plugins/core/hooks/behaviour-protocol.md`). This file adds rules specific to developing the marketplace itself.
 
 ## Project Overview
 
-`spark` is a Claude Code plugin marketplace published from `github.com/bim-ba/ai`. It ships two plugins:
+`ai` is a Claude Code plugin marketplace published from `github.com/bim-ba/ai`. It ships two plugins:
 
 - **`core`** — generic agent behavior (the SessionStart behaviour-protocol hook + a Stop drift-log reminder), reusable workflow skills, the `/setup` scaffolder, and project templates.
 - **`data`** — reusable data-engineering rulebook skills (ClickHouse query practices).
 
 ## Structure
 
-- `.claude-plugin/marketplace.json` — marketplace manifest (name `spark`, plugins `core` + `data`).
+- `.claude-plugin/marketplace.json` — marketplace manifest (name `ai`, plugins `core` + `data`).
 - `plugins/core/` — `hooks/`, `skills/`, `templates/`.
 - `plugins/data/` — `skills/`.
 - `docs/superpowers/` — specs and implementation plans.

@@ -78,7 +78,7 @@ uv run --no-project "$CLAUDE_PLUGIN_ROOT/skills/setup/scripts/bootstrap.py" \
   --with "core"   # replace "core" with the user's --with list, e.g. "core,data"; core is always enabled
 ```
 
-`bootstrap.py` is idempotent — it creates only missing artifacts and prints a CREATED/SKIPPED/PATCHED summary. It never overwrites `CLAUDE.md`, never writes drift-log entries, and merges `.claude/settings.json` without clobbering existing keys. Each resolved plugin name is written as `<name>@spark: true` (non-clobber) into the requested spark plugins (core always).
+`bootstrap.py` is idempotent — it creates only missing artifacts and prints a CREATED/SKIPPED/PATCHED summary. It never overwrites `CLAUDE.md`, never writes drift-log entries, and merges `.claude/settings.json` without clobbering existing keys. Each requested plugin name (plus `core`, always) is written as `<name>@spark: true` into `.claude/settings.json`, non-clobber.
 
 ### Step 3 — Verify
 

@@ -1,0 +1,6 @@
+{
+  "name": "core",
+  "version": "0.1.0",
+  "description": "Generic agent behavior (delivered via hooks), reusable skills, and the /setup project scaffolder.",
+  "author": { "name": "bim-ba" }
+}

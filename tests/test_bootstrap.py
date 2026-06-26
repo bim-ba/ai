@@ -49,7 +49,8 @@ class BootstrapWiring(unittest.TestCase):
                 "enabledPlugins": {"core@spark": True},
                 "customKey": 123,
             }))
-            run_bootstrap(tmp, "core")
+            r = run_bootstrap(tmp, "core")
+            self.assertEqual(r.returncode, 0, r.stderr)
             s = load_settings(tmp)
             self.assertIs(s["enabledPlugins"].get("core@spark"), True)  # stale key preserved
             self.assertIs(s["enabledPlugins"].get("core@ai"), True)     # new key added

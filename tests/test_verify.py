@@ -50,13 +50,15 @@ class VerifyChecks(unittest.TestCase):
             r = run_verify(tmp)
             self.assertEqual(r.returncode, 1)
             self.assertIn("enabledPlugins.core@ai absent", r.stdout)
+            self.assertIn("extraKnownMarketplaces.ai absent", r.stdout)
 
     def test_bootstrap_then_verify_roundtrip(self):
         with tempfile.TemporaryDirectory() as tmp:
-            subprocess.run(
+            br = subprocess.run(
                 [sys.executable, str(BOOTSTRAP),
                  "--project-root", tmp, "--plugin-root", str(PLUGIN_ROOT),
                  "--with", "core,data"], capture_output=True, text=True)
+            self.assertEqual(br.returncode, 0, br.stdout + br.stderr)
             r = run_verify(tmp)
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
             self.assertIn("verify OK", r.stdout)

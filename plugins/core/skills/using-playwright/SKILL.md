@@ -1,6 +1,8 @@
 ---
 name: using-playwright
 description: Use when driving any web UI through the Playwright MCP -- logging into SSO-gated portals, filling Monaco or textarea editors, extracting page content, or operating internal tools via browser automation. Covers session/login handling, reliable text input, snapshot-vs-screenshot, and token-efficient extraction.
+type: skill
+category: workflow
 ---
 
 # Skill: using-playwright

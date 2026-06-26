@@ -2,7 +2,7 @@
 # requires-python = ">=3.9"
 # dependencies = []
 # ///
-"""Idempotent spark project scaffold. Creates missing artifacts, never overwrites."""
+"""Idempotent ai project scaffold. Creates missing artifacts, never overwrites."""
 import argparse
 import json
 import shutil
@@ -30,13 +30,13 @@ def merge_settings(root, plugin_names, actions):
     changed = not path.exists()
 
     mkts = settings.setdefault("extraKnownMarketplaces", {})
-    if "spark" not in mkts:
-        mkts["spark"] = {"source": {"source": "github", "repo": "bim-ba/ai"}}
+    if "ai" not in mkts:
+        mkts["ai"] = {"source": {"source": "github", "repo": "bim-ba/ai"}}
         changed = True
 
     plugins = settings.setdefault("enabledPlugins", {})
     for name in plugin_names:
-        key = name + "@spark"
+        key = name + "@ai"
         if key not in plugins:
             plugins[key] = True
             changed = True
@@ -52,7 +52,7 @@ def main():
     ap.add_argument("--project-root", required=True, type=Path)
     ap.add_argument("--plugin-root", required=True, type=Path)
     ap.add_argument("--with", dest="with_plugins", default="core",
-                    help="comma-separated spark plugin names to enable (core is always included)")
+                    help="comma-separated ai plugin names to enable (core is always included)")
     args = ap.parse_args()
 
     root = args.project_root.resolve()

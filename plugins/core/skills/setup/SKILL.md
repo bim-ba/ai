@@ -34,7 +34,11 @@ Brings a project into the claude-toolkit ecosystem in one shot: creates the dire
 Before running any step, verify:
 
 1. **Project root is identifiable.** Look for the root via `git rev-parse --show-toplevel 2>/dev/null` or use the working directory if not a git repo. All paths below are relative to `PROJECT_ROOT`.
-2. **`CLAUDE_PLUGIN_ROOT` resolves.** This variable points to the `core` plugin directory. It is typically set by the Claude Code plugin loader; confirm it is in the environment or resolve it manually as the directory containing this SKILL.md (`plugins/core/` in the source repo). All template source paths below use `${CLAUDE_PLUGIN_ROOT}/templates/`.
+2. **`CLAUDE_PLUGIN_ROOT` resolves.** This variable points to the `core` plugin directory. It is typically set by the Claude Code plugin loader; if unset, apply this fallback before any other step:
+   ```bash
+   : "${CLAUDE_PLUGIN_ROOT:=$(cd "$(dirname "$0")/.." && pwd)}"
+   ```
+   All template source paths below use `${CLAUDE_PLUGIN_ROOT}/templates/`.
 3. **Parse flags from the user's invocation:**
    - `--automated` → use the go-task drift-log variant (`drift-log-automated/`); also copy `Taskfile.audit.yml`.
    - `--data` → also enable the `data` plugin in `enabledPlugins`.
@@ -207,6 +211,7 @@ Example: if the existing file already contains `"superpowers@claude-plugins-offi
 Concrete approach using Python (available on most systems):
 
 ```bash
+[ "$SETUP_FLAGS" = "--data" ] && export SETUP_DATA=1
 python3 - <<'EOF'
 import json, os, sys
 
@@ -245,8 +250,6 @@ with open(settings_path, "w") as f:
 print("settings.json written.")
 EOF
 ```
-
-Set `SETUP_DATA=1` in the shell environment before running the script when `--data` was passed.
 
 ### Step 7 — Print summary
 
@@ -288,7 +291,8 @@ After running all steps, verify:
 2. `.claude/drift-log/README.md` and `_template.md` are present.
 3. `.claude/settings.json` contains the `claude-toolkit` key under `extraKnownMarketplaces` and `core@claude-toolkit` under `enabledPlugins`. Quick check:
    ```bash
-   python3 -c "import json; s=json.load(open('$PROJECT_ROOT/.claude/settings.json')); \
+   python3 -c "import json, os; p=os.path.join(os.environ['PROJECT_ROOT'],'.claude','settings.json'); \
+     s=json.load(open(p)); \
      assert 'claude-toolkit' in s.get('extraKnownMarketplaces', {}); \
      assert 'core@claude-toolkit' in s.get('enabledPlugins', {}); print('settings.json OK')"
    ```
@@ -303,7 +307,7 @@ After running all steps, verify:
 ## Guardrails
 
 - **Never overwrite `CLAUDE.md`** even if its content looks stale. The user owns it. Print the reminder and stop.
-- **Never overwrite existing drift-log entries** (`open/*.md`, `applied/*.md`). The drift-log is an immutable historical record; `/setup` only installs the scaffolding, not the entries.
+- **Never write drift-log entry files** (`open/*.md`, `applied/*.md`). This skill only creates the `open/` and `applied/` directories (`mkdir -p`) plus `README.md` and `_template.md`; it never writes individual entries. The drift-log is an immutable historical record — entry creation is out of scope for `/setup`.
 - **Merge settings.json — never replace it.** The file may contain permissions, hooks, MCP server config, and other keys that are invisible to this skill but critical to the project. A full replace will silently delete them. Merge only the specific keys defined in Step 6.
 - **`AGENTS.md` symlink: check before creating.** If `AGENTS.md` already exists as a file (not a symlink), do not replace it — warn the user.
 - **`--automated` Taskfile.audit.yml note is mandatory.** When copying the file, always print the `includes:` instruction. The file is inert until the user wires it in.

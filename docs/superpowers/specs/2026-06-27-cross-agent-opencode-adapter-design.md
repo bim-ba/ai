@@ -6,8 +6,9 @@
 
 ## Goal
 
-Make the `spark` marketplace consumable by **opencode** as a first-class target,
-without forking content. Today spark targets Claude Code only: a git-resolved
+Make the `ai` marketplace (renamed from `spark` in Phase 0) consumable by
+**opencode** as a first-class target, without forking content. Today it targets
+Claude Code only: a git-resolved
 marketplace (`.claude-plugin/marketplace.json`) plus a `core` plugin whose generic
 behavior is injected by a `SessionStart` hook and whose drift-log nudge is a `Stop`
 hook. This phase adds an opencode adapter — published to npm as `@bim-ba/ai-opencode`
@@ -21,8 +22,18 @@ release pipeline) is a separate spec and depends on this one landing.
 
 The full idea ("matrix CI + cross-agent support") decomposes into:
 
-- **Phase A — this spec:** opencode adapter + monorepo scaffolding. Makes spark
-  cross-agent.
+- **Phase 0 — rebrand `spark → ai`** (lands before A): the project unifies on a single
+  brand `ai`, mirroring `github.com/bim-ba/ai`. The Claude marketplace `name` becomes
+  `ai`; enablement keys become `core@ai` / `data@ai`; `extraKnownMarketplaces.ai`.
+  Functional surface is 3 files (`marketplace.json`, `bootstrap.py`, `verify.py`); the
+  rest is prose. **Breaking change** for existing `@spark` installs, accepted now at
+  v0.1.0. `bootstrap.py` stays **non-destructive**: it only *adds* `@ai` keys and never
+  removes stale `@spark` keys (preserves the "merge, never clobber" guarantee); the
+  one-time stale key is harmless and the re-run migration is documented in README. The
+  install command `/plugin marketplace add bim-ba/ai` is unchanged (resolves by repo,
+  not by name).
+- **Phase A — this spec:** opencode adapter + monorepo scaffolding. Makes the `ai`
+  project cross-agent.
 - **Phase B — separate spec:** CI (full lint + e2e `/setup` matrix, deterministic),
   opencode-smoke job, and npm `publish`-on-tag for `@bim-ba/ai-opencode`. Depends on A.
 
@@ -44,15 +55,16 @@ The full idea ("matrix CI + cross-agent support") decomposes into:
     package is the opencode *adapter*, not the whole project, so the platform marker
     is honest (and matches the opencode ecosystem's `opencode-*` convention for npm
     discoverability). The bare `@bim-ba/ai` is intentionally reserved for a possible
-    future umbrella. The Claude marketplace name `spark` stays a Claude-internal
-    identifier and does not leak into npm.
+    future umbrella. After the Phase 0 rebrand the project carries a single brand
+    `ai` across repo, marketplace name, enablement keys (`core@ai` / `data@ai`), and
+    npm (`@bim-ba/ai-*`) — there is no second brand left to reconcile.
 - **No source duplication.** Skills + `behaviour-protocol.md` have exactly one home
   in the repo (the Claude plugin tree, whose loader is the strictest). The npm
   package receives **build-time copies**, not a second source.
 
 ## What maps to opencode (research summary)
 
-| spark mechanism | opencode equivalent | Work |
+| mechanism | opencode equivalent | Work |
 |---|---|---|
 | Skills (`SKILL.md`) | Native: opencode reads `.claude/skills/`, `~/.claude/skills/`, plus its own `skills.paths`/`skills.urls` | 0 — open standard |
 | `CLAUDE.md` / `AGENTS.md` | Read natively | 0 |
@@ -76,7 +88,7 @@ hook mutates the live merged config so the consumer never hand-wires paths:
 - appends the package's bundled `behaviour-protocol.md` to `cfg.instructions`
   (always-on behavior — the `SessionStart` analogue);
 - appends the package's bundled skills directory to `cfg.skills.paths`
-  (so opencode discovers every `SKILL.md` spark ships).
+  (so opencode discovers every `SKILL.md` the project ships).
 
 Because the package is installed under
 `~/.cache/opencode/node_modules/@bim-ba/ai-opencode/`, its bundled assets are on
@@ -106,7 +118,7 @@ ai/                                    # repo root = github.com/bim-ba/ai
 ├── opencode.json                      # makes the repo itself a working opencode project (dogfood + Phase B smoke)
 ├── .opencode/
 │   └── plugin/
-│       └── spark.ts                   # one-line re-export of packages/ai-opencode (local dogfood)
+│       └── ai.ts                      # one-line re-export of packages/ai-opencode (local dogfood)
 │
 ├── plugins/                           # Claude Code adapter — layout fixed by loader, UNCHANGED
 │   ├── core/
@@ -172,7 +184,7 @@ to keep "move files around" in one language. CLAUDE.md is updated to reflect thi
   `publishConfig.access: public`, `engines.opencode` (minimum version — **verify
   latest stable at implementation time, do not guess**), `files` whitelist (dist +
   synced assets), `prepare` → runs sync-assets.
-- **`.opencode/plugin/spark.ts`** — one-line re-export of the package, so the repo is
+- **`.opencode/plugin/ai.ts`** — one-line re-export of the package, so the repo is
   a runnable opencode project for dogfooding and the Phase B smoke test.
 - **`opencode.json` (root)** — dogfood config pointing at canonical asset paths.
 - **`README.md`** — dual install instructions (git one-liner for Claude, npm
@@ -198,14 +210,14 @@ to keep "move files around" in one language. CLAUDE.md is updated to reflect thi
   assert it appends instruction + skills paths, and that a pre-populated config keeps
   its existing entries (merge-not-clobber).
 - **Smoke (deferred to Phase B):** a real `opencode run` against a free OpenRouter
-  model, asserting the agent can list/load a spark skill. Validates the skill layer
+  model, asserting the agent can list/load an `ai` skill. Validates the skill layer
   on a live agent; cannot validate the Claude hook/marketplace layer (opencode
   ignores those by design).
 
 ## Out of scope (this phase)
 
 - CI workflow, release/publish automation, opencode-smoke job → **Phase B**.
-- Porting Claude `commands`/`agents` formats (spark ships neither).
+- Porting Claude `commands`/`agents` formats (the project ships neither).
 - Any change to the Claude Code adapter's behavior or install flow.
 
 ## Open questions (resolve during implementation, with defaults)

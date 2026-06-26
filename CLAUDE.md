@@ -22,4 +22,4 @@
 - **Extracted scripts are stdlib-only** with a PEP 723 header (`requires-python = ">=3.9"`, `dependencies = []`), run via `uv run`.
 - **Skills follow** `plugins/core/templates/skills-authoring-standard.md` (workflow vs rulebook categories, naming convention, self-contained structure).
 - **Plugins cannot inject always-on instructions** — generic behavior goes through the `core` SessionStart hook, never a shipped CLAUDE.md.
-- Work stays on the feature branch (`feat/claude-toolkit-bootstrap`); do not merge to `main` without an explicit ask.
+- **`main` is the published trunk** the marketplace resolves from (`/plugin marketplace add bim-ba/ai`) — keep it working. Do feature work on branches and merge into `main` via PR.

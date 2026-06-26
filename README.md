@@ -1,4 +1,4 @@
-# claude-toolkit
+# spark
 
 Claude Code plugin marketplace providing reusable agent behaviors, scaffolding, and data-engineering skills. The `core` plugin supplies generic agent patterns and project setup scaffolding; the `data` plugin adds ClickHouse and dbt query practices for data projects.
 

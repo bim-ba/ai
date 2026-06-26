@@ -1,5 +1,5 @@
 {
-  "name": "claude-toolkit",
+  "name": "spark",
   "plugins": [
     { "name": "core", "source": "./plugins/core", "description": "Generic agent behavior + reusable skills + /setup scaffolder for any project." },
     { "name": "data", "source": "./plugins/data", "description": "Reusable data-engineering skills (ClickHouse/dbt query practices)." }

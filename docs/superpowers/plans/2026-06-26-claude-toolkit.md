@@ -177,36 +177,44 @@ Expected: branch pushed.
 **Interfaces:**
 - Consumes: `behaviour-protocol.md` (Task 1.2). The hook command reads + echoes it. Plugin hook commands can reference the plugin dir via `${CLAUDE_PLUGIN_ROOT}`.
 
+**VERIFIED FACTS (via Claude Code docs, do not re-litigate):**
+- Plugin hook env var is exactly `${CLAUDE_PLUGIN_ROOT}` (plugin install dir).
+- A plugin `hooks/hooks.json` wraps events under a top-level `"hooks"` key: `{ "hooks": { "SessionStart": [...], "Stop": [...] } }`.
+- `SessionStart` stdout is NOT auto-injected. To put text in session context the command MUST print JSON `{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"<text>"}}` and exit 0. We build that JSON from the protocol file with `jq -Rs` (requires `jq`, which the user already relies on).
+- `Stop` hook keeps the plain-`echo` reminder pattern (matches the user's existing, working project Stop hooks).
+
 - [ ] **Step 1: Write `hooks.json`**
 
 ```json
 {
-  "SessionStart": [
-    {
-      "hooks": [
-        {
-          "type": "command",
-          "command": "cat \"${CLAUDE_PLUGIN_ROOT}/hooks/behaviour-protocol.md\"",
-          "timeout": 5
-        }
-      ]
-    }
-  ],
-  "Stop": [
-    {
-      "hooks": [
-        {
-          "type": "command",
-          "command": "echo 'Drift-log check: scan last turn against .claude/drift-log/README.md triggers (1-8). If any fired — create .claude/drift-log/open/$(date +%Y-%m-%d)-<slug>.md from _template.md. Else acknowledge: \"drift-log delta: none\".'",
-          "timeout": 5
-        }
-      ]
-    }
-  ]
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -Rs '{hookSpecificOutput:{hookEventName:\"SessionStart\",additionalContext:.}}' \"${CLAUDE_PLUGIN_ROOT}/hooks/behaviour-protocol.md\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Drift-log check: scan last turn against .claude/drift-log/README.md triggers (1-8). If any fired — create .claude/drift-log/open/$(date +%Y-%m-%d)-<slug>.md from _template.md. Else acknowledge: \"drift-log delta: none\".'",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
 
-- [ ] **Step 2: Verify `${CLAUDE_PLUGIN_ROOT}` is the correct plugin-root variable** for the installed Claude Code version (check plugin hooks docs; if the variable name differs, use the documented one). This is the one externally-dependent fact — confirm before relying on it.
+- [ ] **Step 2: Validate** — `jq . plugins/core/hooks/hooks.json` parses; and dry-run the injection command: `jq -Rs '{hookSpecificOutput:{hookEventName:"SessionStart",additionalContext:.}}' plugins/core/hooks/behaviour-protocol.md | jq .` produces valid JSON whose `.hookSpecificOutput.additionalContext` equals the protocol text. (Live in-session injection is validated in Phase 4.)
 
 - [ ] **Step 3: Commit** `git add plugins/core/hooks/hooks.json && git commit -m "feat(core): SessionStart protocol + Stop drift-log hooks"`
 

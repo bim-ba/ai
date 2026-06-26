@@ -35,7 +35,7 @@ Load the relevant skill before any domain-specific task where conventions, templ
 - Before documenting a backend domain — load `documentation-backend`
 - Before creating or updating an issue tracker entry — load the relevant tracker skill
 - Before creating or editing a wiki page — load the relevant wiki skill
-- Before writing meeting notes from an SRT transcript — load `operational-meeting-documentation`
+- Before writing meeting notes from an SRT transcript — load `documenting-meetings`
 - Before building or editing a presentation deck — load the relevant presentation skill
 - Before writing or reviewing `docs/` for a service repository — load the relevant documentation skill
 

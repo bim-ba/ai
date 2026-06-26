@@ -1,11 +1,11 @@
 ---
-name: systematic-research
+name: researching-rigorously
 description: Use for any research, validation, or fact-check task -- before answering a load-bearing question or committing to an approach. Orients via local sources and knowledge tools, fans out parallel subagents per source, cross-validates via MCP servers and web research, and cites sources.
 type: skill
 category: workflow
 ---
 
-# Skill: systematic-research
+# Skill: researching-rigorously
 
 ## Purpose
 

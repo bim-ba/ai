@@ -1,11 +1,11 @@
 ---
-name: operational-meeting-documentation
+name: documenting-meetings
 description: Use when documenting a meeting from an SRT audio transcript — produces structured meeting notes with decisions, action items, and discussion summary
 type: skill
 category: workflow
 ---
 
-# Skill: operational-meeting-documentation
+# Skill: documenting-meetings
 
 ## Purpose
 
@@ -50,7 +50,7 @@ This skill transforms an SRT audio transcript into structured meeting notes with
 For transcripts > ~50 KB (typically 90+ minute meetings), delegate the full workflow to a subagent to preserve orchestrator context. The subagent cannot write files directly (Write calls are blocked), so use this pattern:
 
 **Orchestrator instructs subagent:**
-> "Read the SRT transcript at `<path>`. Run the operational-meeting-documentation workflow. Do NOT write any files. Instead, return: (1) the full markdown body of summary.md using the template, (2) a digest: count of decisions, count of action items, count of `⚠️ Requires verification` tags, and the last SRT timestamp."
+> "Read the SRT transcript at `<path>`. Run the documenting-meetings workflow. Do NOT write any files. Instead, return: (1) the full markdown body of summary.md using the template, (2) a digest: count of decisions, count of action items, count of `⚠️ Requires verification` tags, and the last SRT timestamp."
 
 **Orchestrator receives and verifies:**
 

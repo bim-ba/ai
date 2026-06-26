@@ -1,13 +1,13 @@
 ---
-name: auditing-agent-instructions
-description: Use when the user wants to audit AI-agent instruction files (CLAUDE.md, skills, drift-log, hooks) for pollution, duplication, dead references, contradictions, or architectural debt. Manual on-demand only. Outputs a committed markdown report; does no auto-fix. Always run together with /claude-md-improver for full coverage.
+name: reviewing-agent-instructions
+description: Use when the user wants to review AI-agent instruction files (CLAUDE.md, skills, drift-log, hooks) for pollution, duplication, dead references, contradictions, or architectural debt. Manual on-demand only. Outputs a committed markdown report; does no auto-fix. Always run together with /claude-md-improver for full coverage.
 type: skill
 category: workflow
 ---
 
-# Auditing Agent Instructions
+# Reviewing Agent Instructions
 
-Manual on-demand audit of AI-agent instruction surface in this repo. Produces a markdown report; never auto-fixes.
+Manual on-demand review of AI-agent instruction surface in this repo. Produces a markdown report; never auto-fixes.
 
 ## When to use
 

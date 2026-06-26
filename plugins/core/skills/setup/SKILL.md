@@ -50,7 +50,7 @@ Before running any step, verify:
    All template source paths below use `${CLAUDE_PLUGIN_ROOT}/templates/`.
 3. **Parse flags from the user's invocation:**
    - `--automated` → use the go-task drift-log variant (`drift-log-automated/`); also copy `Taskfile.audit.yml`.
-   - `--data` → also enable the `data` plugin in `enabledPlugins`.
+   - `--data` → also enable the `data` plugin in `enabledPlugins`. **When present, run `export SETUP_DATA=1`** now, so the Step 6 merge picks it up.
    - Flags may be combined: `/setup --automated --data`.
 
 ---
@@ -62,7 +62,7 @@ Work through every step below in order. For each file or directory, check whethe
 ### Step 1 — Detect project root and existing `.claude/` state
 
 ```bash
-PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+export PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 echo "Project root: $PROJECT_ROOT"
 ls "$PROJECT_ROOT/.claude/" 2>/dev/null && echo ".claude/ exists" || echo ".claude/ not found — will create"
 ```
@@ -220,7 +220,9 @@ Example: if the existing file already contains `"superpowers@claude-plugins-offi
 Concrete approach using Python (available on most systems):
 
 ```bash
-[ "$SETUP_FLAGS" = "--data" ] && export SETUP_DATA=1
+# PROJECT_ROOT must be exported (Step 1 does this) so the heredoc can read it.
+# If the user passed --data, export SETUP_DATA=1 first so the merge enables the data plugin:
+#   export SETUP_DATA=1
 python3 - <<'EOF'
 import json, os, sys
 

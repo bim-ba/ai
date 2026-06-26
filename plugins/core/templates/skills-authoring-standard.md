@@ -52,6 +52,42 @@ If no skill matches, proceed without one and note this as a gap for future skill
 
 ---
 
+## Skill naming convention
+
+Skill directory names are lowercase-kebab and follow one of two shapes by category:
+
+- **Workflow skills** (the skill performs an action) → `<gerund-verb>-<object>`.
+  Verb families: `using-` (operate a tool/service), `documenting-` (produce docs),
+  `reviewing-` (review/audit), `researching-` (research/fact-check),
+  `creating-`/`writing-` (author an artifact).
+  Examples: `using-playwright`, `documenting-meetings`, `reviewing-agent-instructions`,
+  `researching-rigorously`, `creating-drift-logs`, `reviewing-drift-logs`.
+- **Rulebook skills** (a reference body of domain rules, not an action) → `<domain>-<aspect>`.
+  Example: `clickhouse-query-best-practices`.
+
+Exception: a skill meant to be invoked as an explicit slash command may keep a short
+imperative name (e.g. `setup` → `/setup`).
+
+---
+
+## Skill structure (self-contained)
+
+Prefer self-contained skills. `SKILL.md` is a thin router — when to use it, the
+workflow/rules summary, and pointers — while heavier material lives in on-demand
+subdirectories so it is loaded only when needed (token-efficient) and the skill is
+portable:
+
+- `rules/NN-*.md` — atomic rules, one concern per file.
+- `templates/` — copyable artifact templates.
+- `references/` — deep reference material loaded on demand.
+- `examples/` — worked before/after examples.
+- `scripts/` — executable helpers.
+
+Every `rules/`/`examples/`/`templates/` file linked from `SKILL.md` must exist
+(no broken internal links).
+
+---
+
 ## 2. Directory Structure
 
 Every skill follows this exact layout:

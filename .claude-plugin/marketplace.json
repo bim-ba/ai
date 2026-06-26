@@ -1,5 +1,8 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
   "name": "spark",
+  "version": "0.1.0",
+  "owner": { "name": "bim-ba", "email": "careless.sava@gmail.com" },
   "plugins": [
     { "name": "core", "source": "./plugins/core", "description": "Generic agent behavior + reusable skills + /setup scaffolder for any project." },
     { "name": "data", "source": "./plugins/data", "description": "Reusable data-engineering skills (ClickHouse/dbt query practices)." }

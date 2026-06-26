@@ -34,9 +34,18 @@ Brings a project into the claude-toolkit ecosystem in one shot: creates the dire
 Before running any step, verify:
 
 1. **Project root is identifiable.** Look for the root via `git rev-parse --show-toplevel 2>/dev/null` or use the working directory if not a git repo. All paths below are relative to `PROJECT_ROOT`.
-2. **`CLAUDE_PLUGIN_ROOT` resolves.** This variable points to the `core` plugin directory. It is typically set by the Claude Code plugin loader; if unset, apply this fallback before any other step:
+2. **`CLAUDE_PLUGIN_ROOT` resolves.** This variable points to the `core` plugin directory. It is typically set by the Claude Code plugin loader. If it is unset, run this discovery command before any other step:
    ```bash
-   : "${CLAUDE_PLUGIN_ROOT:=$(cd "$(dirname "$0")/.." && pwd)}"
+   # If CLAUDE_PLUGIN_ROOT is unset, discover the installed core plugin root:
+   CLAUDE_PLUGIN_ROOT="$(dirname "$(dirname "$(dirname "$(find "$HOME/.claude/plugins" -type f -path '*/core/skills/setup/SKILL.md' 2>/dev/null | head -1)")")")"
+   # Explanation: SKILL.md lives at <plugin_root>/skills/setup/SKILL.md,
+   # so three dirname calls (SKILL.md -> setup -> skills -> <plugin_root>) yield the plugin root.
+   ```
+   If discovery fails (e.g. the plugin is installed in a non-standard location), set `CLAUDE_PLUGIN_ROOT` manually to the absolute path of the `core` plugin directory you loaded this skill from — the directory that directly contains `skills/` and `templates/`.
+
+   After setting it (via env or discovery), always assert it resolved correctly before proceeding:
+   ```bash
+   [ -d "$CLAUDE_PLUGIN_ROOT/templates" ] || { echo "CLAUDE_PLUGIN_ROOT not resolved correctly: $CLAUDE_PLUGIN_ROOT"; exit 1; }
    ```
    All template source paths below use `${CLAUDE_PLUGIN_ROOT}/templates/`.
 3. **Parse flags from the user's invocation:**

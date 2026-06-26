@@ -1,6 +1,6 @@
 ---
 name: setup
-description: "Use when bootstrapping a new (or existing) project to reuse the shared spark conventions — scaffolds drift-log, claudelint config, a thin CLAUDE.md, and wires the core/data plugins into .claude/settings.json. Idempotent."
+description: "Use when bootstrapping a new (or existing) project to reuse the shared spark conventions — scaffolds drift-log, claudelint config, a thin CLAUDE.md, and wires the requested spark plugins (`core` always) into `.claude/settings.json`. Idempotent."
 type: skill
 category: workflow
 ---
@@ -13,7 +13,7 @@ Scaffolds a target project with the spark conventions: drift-log, claudelint con
 
 ### What this skill enables
 
-Brings a project into the spark ecosystem in one shot: creates the directory structure and config files every agent-aware repo needs, and wires the `core` (and optionally `data`) plugin into `.claude/settings.json` so Claude Code resolves the marketplace correctly.
+Brings a project into the spark ecosystem in one shot: creates the directory structure and config files every agent-aware repo needs, and wires the requested spark plugins (core always) into `.claude/settings.json` so Claude Code resolves the marketplace correctly.
 
 ### When to use it
 
@@ -49,7 +49,7 @@ Before running any step, verify:
    ```
    All template source paths below use `${CLAUDE_PLUGIN_ROOT}/templates/`.
 3. **Parse flags from the user's invocation:**
-   - `--data` → also enable the `data` plugin in `enabledPlugins`. **When present, pass `--data`** to the scaffold script, so `bootstrap.py` (Workflow Step 2) enables the data plugin.
+   - `--with NAMES` → comma-separated spark plugin names to enable (e.g. `--with core,data`). `core` is always enabled even if omitted. Defaults to `core` when the flag is absent (so a bare `/setup` enables just `core`). Pass the value straight through to `bootstrap.py --with`.
 
 ---
 
@@ -70,14 +70,15 @@ echo "Project root: $PROJECT_ROOT"
 
 ### Step 2 — Run the scaffold
 
-Pass `--data` only if the user invoked `/setup --data` (also enables the `data` plugin):
+Pass `--with` with the user's plugin list (core is always enabled even if omitted):
 
 ```bash
 uv run --no-project "$CLAUDE_PLUGIN_ROOT/skills/setup/scripts/bootstrap.py" \
-  --project-root "$PROJECT_ROOT" --plugin-root "$CLAUDE_PLUGIN_ROOT"   # add --data when requested
+  --project-root "$PROJECT_ROOT" --plugin-root "$CLAUDE_PLUGIN_ROOT" \
+  --with "core"   # replace "core" with the user's --with list, e.g. "core,data"; core is always enabled
 ```
 
-`bootstrap.py` is idempotent — it creates only missing artifacts and prints a CREATED/SKIPPED/PATCHED summary. It never overwrites `CLAUDE.md`, never writes drift-log entries, and merges `.claude/settings.json` without clobbering existing keys.
+`bootstrap.py` is idempotent — it creates only missing artifacts and prints a CREATED/SKIPPED/PATCHED summary. It never overwrites `CLAUDE.md`, never writes drift-log entries, and merges `.claude/settings.json` without clobbering existing keys. Each resolved plugin name is written as `<name>@spark: true` (non-clobber) into the requested spark plugins (core always).
 
 ### Step 3 — Verify
 

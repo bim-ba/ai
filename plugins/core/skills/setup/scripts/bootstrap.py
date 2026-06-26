@@ -24,7 +24,7 @@ def project_name(root):
     return root.name
 
 
-def merge_settings(root, enable_data, actions):
+def merge_settings(root, plugin_names, actions):
     path = root / ".claude" / "settings.json"
     settings = json.loads(path.read_text()) if path.exists() else {}
     changed = not path.exists()
@@ -35,12 +35,11 @@ def merge_settings(root, enable_data, actions):
         changed = True
 
     plugins = settings.setdefault("enabledPlugins", {})
-    if "core@spark" not in plugins:
-        plugins["core@spark"] = True
-        changed = True
-    if enable_data and "data@spark" not in plugins:
-        plugins["data@spark"] = True
-        changed = True
+    for name in plugin_names:
+        key = name + "@spark"
+        if key not in plugins:
+            plugins[key] = True
+            changed = True
 
     if changed:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -52,7 +51,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--project-root", required=True, type=Path)
     ap.add_argument("--plugin-root", required=True, type=Path)
-    ap.add_argument("--data", action="store_true")
+    ap.add_argument("--with", dest="with_plugins", default="core",
+                    help="comma-separated spark plugin names to enable (core is always included)")
     args = ap.parse_args()
 
     root = args.project_root.resolve()
@@ -95,7 +95,12 @@ def main():
             agents.symlink_to("CLAUDE.md")
             actions.append(("CREATED", "AGENTS.md -> CLAUDE.md"))
 
-    merge_settings(root, args.data, actions)
+    requested = [p.strip() for p in args.with_plugins.split(",") if p.strip()]
+    plugin_names = []
+    for name in ["core"] + requested:          # core always first
+        if name not in plugin_names:
+            plugin_names.append(name)
+    merge_settings(root, plugin_names, actions)
 
     if shutil.which("claudelint") is None:
         print("note: claudelint not found — install it to lint your agent surface "

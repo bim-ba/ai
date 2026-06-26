@@ -182,11 +182,31 @@ where relname = 'large_table'
 
 ## Examples (RED → GREEN)
 
-Worked rewrites of real research queries demonstrating:
+Three worked rewrites of real research queries. Each file shows the original (RED) and the refactored (GREEN) version with a rule-by-rule breakdown.
 
-- Flow analysis via `groupUniqArray + arraySort + map` (rules 01, 04, 05)
-- Federation wrapping (rule 01)
-- Runtime boundary, hybrid sources, dedup-then-join (rules 01, 02, 03, 06)
+### [before-after-broken-fk](examples/before-after-broken-fk.md) — rules 01, 09, 11
+
+**Thesis**: FK-integrity probe — count `fact_table` rows where `foreign_id` has no match in `dim_table`.
+
+RED: `postgresql(...)` for `dim_table.id` appears twice in the same query → 3 PG round-trips; `count() - countIf(...)` expression repeated 3×.
+
+GREEN: one `dim_ids` CTE (rule 01) collapses to 2 round-trips; alias reuse (rule 09) means each aggregate is written once.
+
+### [before-after-orphan-removed](examples/before-after-orphan-removed.md) — rules 01, 04, 05, 07, 11
+
+**Thesis**: lifecycle-distribution probe — which combinations of Removed / Added / Declared events does each entity see?
+
+RED: `groupUniqArray(type)` returns raw ints + 2^3 boolean cross-tab with hard-to-read rows.
+
+GREEN: `map(int, 'NN-Name')` (rule 04) + `arraySort(groupUniqArray(label))` (rule 05) → one `flow` column per entity; result collapses to N actually-observed patterns. Citation comment (rule 07) points to the source enum.
+
+### [before-after-window-match](examples/before-after-window-match.md) — rules 01, 02, 03, 06, 10
+
+**Thesis**: event-mirror validation — does `entity_events.type=125` appear within 60 s of `entity_history.type=1` after the feature release?
+
+RED: hardcoded release date literal; large event table queried through `postgresql()` (full scan); N × M cross-product join; sentinel `!= toDateTime64(0, 6)` for null-detection.
+
+GREEN: `first_event_125_at` CTE derives boundary from data (rule 02); large table moved to CH mirror (rule 06); both sides deduped with `limit 1 by` (rule 03) → 1:1 join; `settings join_use_nulls = 1` (rule 10) makes `diff is null` work cleanly.
 
 ## ClickHouse-vs-PostgreSQL idiom map
 

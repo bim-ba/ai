@@ -40,17 +40,7 @@ Copy `templates/_template.md` to `.claude/drift-log/open/<YYYY-MM-DD>-<kebab-slu
 
 **One insight = one entry.** Split entries by *insight*, not by target file or by the number of files a fix touches. If two observations share a root cause and would be resolved by the same edit, they are one entry.
 
-### Step 4: Update the README index
-
-In the same commit, add a summary line to the `## OPEN` section of `.claude/drift-log/README.md`:
-
-```
-- [YYYY-MM-DD — title](open/YYYY-MM-DD-kebab-slug.md) — PRIORITY. One-paragraph hook.
-```
-
-The index line is part of entry creation, not an afterthought.
-
-### Step 5: Announce in chat
+### Step 4: Announce in chat
 
 After creating the entry, mention it in one line: `Logged drift: open/<file>.md`
 
@@ -58,7 +48,6 @@ After creating the entry, mention it in one line: `Logged drift: open/<file>.md`
 
 - Entry file exists at `.claude/drift-log/open/<YYYY-MM-DD>-<slug>.md`
 - Frontmatter includes `date`, `status: OPEN`, `priority`, `trigger`, `session_context`
-- README `## OPEN` section has the new summary line
 - Body has no placeholder text left unfilled (except `Resolution`, which stays blank while OPEN)
 
 ## Guardrails
@@ -73,7 +62,6 @@ After creating the entry, mention it in one line: `Logged drift: open/<file>.md`
 | Artifact | Path | Naming |
 |---|---|---|
 | Drift entry | `.claude/drift-log/open/YYYY-MM-DD-<slug>.md` | kebab-case slug; one file per insight |
-| README index line | `.claude/drift-log/README.md` § OPEN | one line per entry, same commit |
 
 ## References Guide
 

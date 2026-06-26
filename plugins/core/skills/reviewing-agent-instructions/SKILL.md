@@ -37,19 +37,11 @@ Ask: "Run with default scope, or narrow to a specific subset?" Default to full s
 
 ### Step 2: Level 1 — Mechanical
 
-First, detect which drift-log variant this project uses:
+Run the mechanical checks using however this project runs them (a task runner, a shell script, or by hand). The checks are deterministic; the delivery mechanism varies by project.
 
-- **Automated variant** — a `Taskfile.yml` with `audit:*` tasks is present. Run:
-  ```bash
-  go-task audit:mechanical
-  ```
-  This returns a JSON array of findings (schema documented in `references/level-1-checks.md`). Write the full JSON to `.claude/audit/YYYY-MM-DD-audit-level1.json`.
+If a script or task runner is available, run the mechanical checks and write the JSON output to `.claude/audit/YYYY-MM-DD-audit-level1.json`. If no automation is present, perform the equivalent checks manually: grep for dead references (confirm linked paths exist) and check file sizes (`wc -l` on each SKILL.md / CLAUDE.md, flag >150 lines). State in the report which approach was used.
 
-- **Lightweight variant** — no `go-task audit:*` tooling is installed. In this case:
-  - State in the report that Level 1 automated tooling was skipped (no Taskfile audit tasks present).
-  - Perform the equivalent checks manually during Level 2 where cheap: dead references (grep referenced paths and confirm they exist), oversized files (`wc -l` on each SKILL.md / CLAUDE.md, flag >150 lines).
-
-`references/level-1-checks.md` documents the full mechanical check schema — use it as a reference for the manual equivalents when the Taskfile tooling is absent, or as the spec when it is present.
+`references/level-1-checks.md` documents the full mechanical check schema — use it as both the spec (when tooling is present) and the manual checklist (when running by hand).
 
 ### Step 3: Level 2 — Semantic (LLM, targeted)
 

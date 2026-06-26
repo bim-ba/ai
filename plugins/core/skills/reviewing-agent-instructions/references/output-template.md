@@ -22,21 +22,22 @@ findings_count:
 
 ## Level 1: Mechanical
 
-Source: `go-task audit:mechanical` (automated variant) or manual equivalents (lightweight variant). Show a **summary table** of the most actionable findings (top ~20: all HIGH + a representative MED sample). The full raw JSON (automated variant only) goes to a sidecar file, not inline.
+Source: mechanical checks run via whatever the project uses (task runner, shell script, or by hand). Show a **summary table** of the most actionable findings (top ~20: all HIGH + a representative MED sample). If a full JSON output was produced, it goes to a sidecar file, not inline.
 
 | Check | Severity | File | Detail | Suggestion |
 |-------|----------|------|--------|------------|
 | <check> | <sev> | <file> | <detail> | <suggestion> |
 | ... | | | | |
 
-### Raw JSON: sidecar file (automated variant only)
+### Raw JSON: sidecar file (when automated tooling produces JSON output)
 
 Write the full JSON output to `.claude/audit/YYYY-MM-DD-audit-level1.json` (alongside the report). Reference it from the report rather than inlining. Inlining is unworkable when the JSON exceeds ~5 KB (typical run on a large repo is 100+ KB across 500+ entries).
 
 Commit both files together:
 
 ```bash
-go-task audit:mechanical > .claude/audit/YYYY-MM-DD-audit-level1.json
+# run the mechanical checks (however your project runs them) and write the JSON to:
+# .claude/audit/YYYY-MM-DD-audit-level1.json
 # (then write the .md report)
 git add .claude/audit/YYYY-MM-DD-audit.md .claude/audit/YYYY-MM-DD-audit-level1.json
 ```

@@ -25,7 +25,7 @@ This skill covers the full lifecycle of drift-log entries after they are created
 ## Pre-checks
 
 - Confirm `.claude/drift-log/` exists and has `open/` and `applied/` subdirectories.
-- Read `.claude/drift-log/README.md` to see the current OPEN index.
+- List `.claude/drift-log/open/` to see current OPEN entries (each file there is an open entry).
 - Identify the task: transition a specific entry, triage all stale entries, compact `applied/`, or promote an insight.
 
 ## Workflow
@@ -41,7 +41,7 @@ Run this when the proposed change in a drift entry has been implemented (or when
    - Add `applied_in: <commit-hash-or-file-path>` (where the change landed; leave empty for `dropped`)
    - Add `disposition:` — one of `applied | already-done | dropped | refiled`
 3. Fill in the `## Resolution` section: one paragraph explaining how/where the change was merged (or why it was dropped/refiled).
-4. Update `.claude/drift-log/README.md`: remove the entry line from `## OPEN`; add a summary entry to the current `applied/INDEX-YYYY-MM.md` (theme-grouped; create the month's index file if it does not exist).
+4. The entry is now in `applied/` — no separate index update needed for OPEN (the `open/` directory itself is the live OPEN index). Add a summary entry to the current `applied/INDEX-YYYY-MM.md` (theme-grouped; create the month's index file if it does not exist).
 
 ### Path B: Staleness triage
 
@@ -75,7 +75,7 @@ Run this when `applied/` grows past ~50 entries or the oldest uncovered entries 
 1. Group entries by **theme**.
 2. Write `applied/INDEX-YYYY-MM.md` — one paragraph per entry covering: date, slug, what changed, the file paths that codified the change. Link to each original entry.
 3. Keep the original entries — they remain immutable historical records. The index adds a navigable summary.
-4. Update `.claude/drift-log/README.md` `## APPLIED` section: list the index file at the top and collapse the entries it covers into a single line: `covered in applied/INDEX-YYYY-MM.md`.
+4. The `applied/INDEX-YYYY-MM.md` file is the summary for that month's applied entries. Original entry files remain in place alongside it.
 
 ### Path D: Promote an applied insight to a rule
 
@@ -93,8 +93,8 @@ Run this when a recurring pattern in `applied/` entries indicates a missing stan
 - The file exists in `applied/`, not in `open/`
 - Frontmatter has `status: APPLIED`, `applied_date`, `disposition`
 - `## Resolution` section is filled
-- README `## OPEN` section no longer lists the entry
-- The month's `INDEX-YYYY-MM.md` has a summary for the entry
+- The file no longer appears in `open/` (confirming the `git mv` succeeded)
+- The month's `applied/INDEX-YYYY-MM.md` has a summary for the entry
 
 **After staleness triage:**
 - Every overdue entry has been resolved, refiled, or dropped

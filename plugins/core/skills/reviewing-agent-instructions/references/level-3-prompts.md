@@ -32,7 +32,7 @@ For each codified routine in `CLAUDE.md` or a skill, judge where it best lives:
 | Property of the routine | Best home |
 |-------------------------|-----------|
 | Needs LLM judgment, varies per case | Keep in agent context (CLAUDE.md/skill) |
-| Deterministic, runs often, regex/path-shaped | Move to Taskfile / shell script |
+| Deterministic, runs often, regex/path-shaped | Move to a shell script or task runner |
 | Should fire automatically, not require remembering | Move to a `.claude/settings.json` hook |
 | Composes multiple tools deterministically | Move to a `tasks/*.yml` file |
 

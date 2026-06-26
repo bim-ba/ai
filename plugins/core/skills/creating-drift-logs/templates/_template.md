@@ -9,7 +9,7 @@ session_context: one-line description of what the session was about
 # MUTABLE-FOR-RELOCATION FIELDS — these are mechanical pointers. Update them
 # when the underlying files are renamed/relocated (in the same commit as the
 # rename), so the relocation stays traceable. Do NOT repoint to different
-# content — only to follow renames. See drift-log/README.md § Conventions.
+# content — only to follow renames. See the creating-drift-logs skill rules/.
 affected_source:
   - path/to/file.md
 applied_in: (omit while OPEN; fill on transition to APPLIED)

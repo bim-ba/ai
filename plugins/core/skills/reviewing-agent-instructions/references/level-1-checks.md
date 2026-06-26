@@ -1,14 +1,12 @@
 # Level 1 — Mechanical Checks
 
-Mechanical checks are deterministic and live in `Taskfile.yml` under the `audit:*` namespace. They are invoked from the skill via `go-task audit:mechanical`, which outputs a single JSON array.
+Mechanical checks are deterministic. Run them via whatever the project uses — a task runner, a shell script, or by hand. The output (whether automated or manually assembled) is a JSON array of findings.
 
 ## Invocation
 
-```bash
-go-task audit:mechanical
-```
+Run the mechanical checks (however your project runs them) and write the JSON to `.claude/audit/YYYY-MM-DD-audit-level1.json`. If running manually, assemble the findings into the same JSON schema.
 
-Returns a JSON array of findings. Schema per item:
+The JSON array schema per item:
 
 ```json
 {
@@ -23,8 +21,8 @@ Returns a JSON array of findings. Schema per item:
 
 ## Checks
 
-| Task | Purpose | Severity drivers |
-|------|---------|------------------|
+| Check | Purpose | Severity drivers |
+|-------|---------|------------------|
 | `audit:size-check` | Files exceeding line threshold (env `SIZE_THRESHOLD`, default 150) | LOW < 2×T, MED 2×T–4×T, HIGH > 4×T |
 | `audit:dead-refs` | Markdown link targets that don't exist | Always MED |
 | `audit:stale-open` | drift-log `open/*.md` older than threshold (env `STALE_MONTHS`, default 3) | Always MED |

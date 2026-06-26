@@ -1,0 +1,6 @@
+{
+  "name": "data",
+  "version": "0.1.0",
+  "description": "Reusable data-engineering skills: ClickHouse/dbt query best practices.",
+  "author": { "name": "bim-ba" }
+}

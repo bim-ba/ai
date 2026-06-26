@@ -8,7 +8,7 @@ session_context: one-line description of what the session was about
 
 # MUTABLE-FOR-RELOCATION FIELDS — these are mechanical pointers. Update them
 # when the underlying files are renamed/relocated (in the same commit as the
-# rename), so audit:ingestion-gap stays accurate. Do NOT repoint to different
+# rename), so the relocation stays traceable. Do NOT repoint to different
 # content — only to follow renames. See drift-log/README.md § Conventions.
 affected_source:
   - path/to/file.md

@@ -9,7 +9,7 @@ version: '3'
 #   go-task audit:drift-index-sync
 #   go-task audit:stale-open
 #   go-task audit:stale-applied
-#   go-task audit:mechanical     # all three, JSON output merged
+#   go-task audit:mechanical     # all three, sequential
 #
 # If your project has a dedicated check engine (e.g. `uv run check`), replace
 # the shell implementations below with the appropriate engine invocations.
@@ -23,9 +23,10 @@ tasks:
   drift-index-sync:
     desc: Flag open/ entries missing from the README OPEN index, and index links with no file
     # Emits human-readable findings; exit 1 if any found.
-    # To emit JSON instead, wrap each finding in `{"check":"drift-index-sync","severity":"HIGH","file":"...","detail":"..."}`.
+    # Shell: bash (required for process substitution and bash-isms used below).
     cmds:
       - |
+        #!/usr/bin/env bash
         set -euo pipefail
         DRIFT_DIR="{{.DRIFT_DIR}}"
         README="$DRIFT_DIR/README.md"
@@ -46,14 +47,17 @@ tasks:
         fi
 
         # 2. Every link in the README ## OPEN section must resolve to a real file.
+        # Use process substitution (bash) to keep FINDINGS in the current shell — a
+        # pipeline subshell would discard any increments and the exit-1 gate would
+        # never fire for this check.
         if [ -f "$README" ]; then
-          grep -oE 'open/[0-9][^)]+\.md' "$README" | sort -u | while read -r link; do
+          while read -r link; do
             if [ ! -e "$DRIFT_DIR/$link" ]; then
               echo "HIGH [drift-index-sync] README OPEN index links a missing file: $link"
               echo "  -> Remove the stale index line, or restore the file (it may have been moved to applied/)"
               FINDINGS=$((FINDINGS + 1))
             fi
-          done
+          done < <(grep -oE 'open/[0-9][^)]+\.md' "$README" | sort -u)
         fi
 
         if [ "$FINDINGS" -gt 0 ]; then
@@ -65,8 +69,10 @@ tasks:
     desc: Surface OPEN drift entries overdue for priority-weighted triage (on-demand, not a gate)
     # Thresholds: HIGH > 7d, MEDIUM > 21d, LOW > 60d past date: in frontmatter.
     # Does NOT exit 1 — informational, meant to be run on-demand or in audit:mechanical.
+    # Shell: bash (required for bash-isms: ${b:0:10}, ${priority^^}, [[ … ]]).
     cmds:
       - |
+        #!/usr/bin/env bash
         set -euo pipefail
         OPEN_DIR="{{.DRIFT_DIR}}/open"
         [ -d "$OPEN_DIR" ] || { echo "stale-open: no open/ dir, skipping"; exit 0; }
@@ -117,8 +123,10 @@ tasks:
     # Compaction threshold: >= 50 applied entries not covered by any INDEX-*.md,
     # or oldest uncovered entry > 6 months old.
     # disposition-missing: any applied/*.md lacking disposition: applied|already-done|dropped|refiled
+    # Shell: bash (required for bash-isms: ${b:0:10}, [[ … ]]).
     cmds:
       - |
+        #!/usr/bin/env bash
         set -euo pipefail
         APPLIED_DIR="{{.DRIFT_DIR}}/applied"
         [ -d "$APPLIED_DIR" ] || { echo "stale-applied: no applied/ dir, skipping"; exit 0; }
@@ -130,6 +138,7 @@ tasks:
 
         # Collect all entry filenames covered by any INDEX-*.md
         covered_tmp=$(mktemp)
+        trap 'rm -f "$covered_tmp"' EXIT
         for idx in "$APPLIED_DIR"/INDEX-*.md; do
           [ -e "$idx" ] || continue
           grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}-[^)[:space:]]+\.md' "$idx" >> "$covered_tmp" || true
@@ -184,8 +193,9 @@ tasks:
         fi
 
   mechanical:
-    desc: Run all drift-log audit checks (drift-index-sync, stale-open, stale-applied)
+    desc: Run all drift-log audit checks (drift-index-sync, stale-open, stale-applied); all three always run and report
     cmds:
       - task: drift-index-sync
+        ignore_error: true
       - task: stale-open
       - task: stale-applied

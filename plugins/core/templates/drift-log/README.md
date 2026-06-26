@@ -4,7 +4,7 @@ Per-entry log of divergences between ad-hoc session behavior and codified instru
 
 `CLAUDE.md` § Session Drift Tracking carries the mandate; the triggers and process live here. See `_template.md` for the entry format.
 
-> **Lightweight variant.** This repo runs the drift-log *concept* without the `go-task audit:*` Taskfile tooling. There is no automated index-sync, staleness, or ingestion-gap check — the OPEN/APPLIED index below is maintained by hand. Keep it in lock-step with `open/` manually.
+> **Lightweight variant.** This repo runs the drift-log *concept* without the `go-task audit:*` Taskfile tooling. There is no automated index-sync or staleness check — the OPEN/APPLIED index below is maintained by hand. Keep it in lock-step with `open/` manually.
 
 ## When to log (triggers)
 
@@ -26,6 +26,8 @@ Do NOT log:
 - Mistakes you made that the user corrected, unless the correction reveals a missing rule.
 
 When you log, mention it in chat in one line (`Logged drift: open/<file>.md`). If uncertain whether something qualifies, err on the side of logging — false positives are cheap, missed insights are expensive.
+
+**One insight = one entry.** Split entries by *insight*, not by target-file or by the number of files a fix touches. If two observations share a root cause and would be resolved by the same edit, they are one entry.
 
 ## Conventions
 

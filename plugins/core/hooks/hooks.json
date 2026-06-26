@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo 'Drift-log check: scan last turn against .claude/drift-log/README.md triggers (1-8). If any fired — create .claude/drift-log/open/$(date +%Y-%m-%d)-<slug>.md from _template.md. Else acknowledge: \"drift-log delta: none\".'",
+            "command": "echo 'Drift-log check: scan the last turn against the 8 triggers in the creating-drift-logs skill. If any fired, create an entry per that skill at .claude/drift-log/open/$(date +%Y-%m-%d)-<slug>.md. Else acknowledge: \"drift-log delta: none\".'",
             "timeout": 5
           }
         ]

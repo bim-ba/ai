@@ -49,7 +49,7 @@ Before running any step, verify:
    ```
    All template source paths below use `${CLAUDE_PLUGIN_ROOT}/templates/`.
 3. **Parse flags from the user's invocation:**
-   - `--data` → also enable the `data` plugin in `enabledPlugins`. **When present, run `export SETUP_DATA=1`** now, so the Step 6 merge picks it up.
+   - `--data` → also enable the `data` plugin in `enabledPlugins`. **When present, pass `--data`** to the scaffold script, so `bootstrap.py` (Workflow Step 2) enables the data plugin.
 
 ---
 
@@ -110,7 +110,7 @@ Post-checks are performed by `verify.py` in Workflow Step 3 (drift-log dirs, set
 
 - **Never overwrite `CLAUDE.md`** even if its content looks stale. The user owns it. Print the reminder and stop.
 - **Never write drift-log entry files** (`open/*.md`, `applied/*.md`). This skill only creates the `open/` and `applied/` directories (`mkdir -p`); it never writes individual entries. The drift-log is an immutable historical record — entry creation is out of scope for `/setup`.
-- **Merge settings.json — never replace it.** The file may contain permissions, hooks, MCP server config, and other keys that are invisible to this skill but critical to the project. A full replace will silently delete them. Merge only the specific keys defined in Step 6.
+- **Merge settings.json — never replace it.** The file may contain permissions, hooks, MCP server config, and other keys that are invisible to this skill but critical to the project. A full replace will silently delete them. Merge only the marketplace + enabledPlugins keys (handled by `bootstrap.py` in Workflow Step 2).
 - **`AGENTS.md` symlink: check before creating.** If `AGENTS.md` already exists as a file (not a symlink), do not replace it — warn the user.
 - **claudelint binary absence is not an error.** Print the install reminder and continue — the config is still useful for when the binary is later installed.
 - **Do not install claudelint or any binary.** `/setup` is a scaffolding skill only. Binary installation is out of scope.

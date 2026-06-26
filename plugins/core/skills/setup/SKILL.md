@@ -55,195 +55,43 @@ Before running any step, verify:
 
 ## Workflow
 
-Work through every step below in order. For each file or directory, check whether it already exists before acting. **Never overwrite existing files** — log skips clearly. Collect all created/skipped decisions and report them in Step 7.
-
-### Step 1 — Detect project root and existing `.claude/` state
+### Step 1 — Resolve roots (bash pre-check)
 
 ```bash
 export PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-echo "Project root: $PROJECT_ROOT"
-ls "$PROJECT_ROOT/.claude/" 2>/dev/null && echo ".claude/ exists" || echo ".claude/ not found — will create"
-```
 
-Record whether `.claude/` already exists. Either way, proceed — idempotency is per-file, not per-directory.
-
-### Step 2 — Set up drift-log directories
-
-Create the drift-log directory structure (skip if directories already exist):
-
-```bash
-mkdir -p "$PROJECT_ROOT/.claude/drift-log/open"
-mkdir -p "$PROJECT_ROOT/.claude/drift-log/applied"
-```
-
-Print the following pointer for the user:
-
-> Drift-log conventions live in the `creating-drift-logs` and `reviewing-drift-logs` skills (from the `core` plugin) — no per-project README/template is copied.
-
-### Step 3 — Copy claudelint config
-
-```bash
-# .claudelintrc.json — only if absent
-[ -f "$PROJECT_ROOT/.claudelintrc.json" ] \
-  || cp "${CLAUDE_PLUGIN_ROOT}/templates/claudelintrc.json" \
-        "$PROJECT_ROOT/.claudelintrc.json"
-
-# .claudelintignore — only if absent
-[ -f "$PROJECT_ROOT/.claudelintignore" ] \
-  || cp "${CLAUDE_PLUGIN_ROOT}/templates/claudelintignore" \
-        "$PROJECT_ROOT/.claudelintignore"
-```
-
-Check whether the binary is available:
-
-```bash
-command -v claudelint > /dev/null 2>&1 \
-  || echo "claudelint not found — install it to lint your agent surface (config written anyway)."
-```
-
-### Step 4 — Copy skills-authoring-standard.md
-
-```bash
-mkdir -p "$PROJECT_ROOT/.claude/skills"
-
-# .claude/skills/README.md — only if absent
-[ -f "$PROJECT_ROOT/.claude/skills/README.md" ] \
-  || cp "${CLAUDE_PLUGIN_ROOT}/templates/skills-authoring-standard.md" \
-        "$PROJECT_ROOT/.claude/skills/README.md"
-```
-
-### Step 5 — CLAUDE.md and AGENTS.md symlink
-
-**Case A: No root `CLAUDE.md` exists.** Instantiate from the template and create the symlink.
-
-First, read `${CLAUDE_PLUGIN_ROOT}/templates/CLAUDE.md.tmpl` and substitute `{{PROJECT_NAME}}` with the project's directory basename (or the git remote repo name if available):
-
-```bash
-PROJECT_NAME=$(basename "$PROJECT_ROOT")
-# Optionally, prefer the git remote name:
-# PROJECT_NAME=$(git remote get-url origin 2>/dev/null | sed 's|.*/||; s|\.git$||') \
-#   || PROJECT_NAME=$(basename "$PROJECT_ROOT")
-
-if [ ! -f "$PROJECT_ROOT/CLAUDE.md" ]; then
-  sed "s/{{PROJECT_NAME}}/$PROJECT_NAME/g" \
-      "${CLAUDE_PLUGIN_ROOT}/templates/CLAUDE.md.tmpl" \
-      > "$PROJECT_ROOT/CLAUDE.md"
-
-  # Create AGENTS.md symlink pointing at CLAUDE.md (only if absent)
-  [ -e "$PROJECT_ROOT/AGENTS.md" ] \
-    || ln -s CLAUDE.md "$PROJECT_ROOT/AGENTS.md"
+# CLAUDE_PLUGIN_ROOT is normally set by the plugin loader. If unset, discover it:
+if [ -z "$CLAUDE_PLUGIN_ROOT" ]; then
+  CLAUDE_PLUGIN_ROOT="$(dirname "$(dirname "$(dirname "$(find "$HOME/.claude/plugins" -type f -path '*/core/skills/setup/SKILL.md' 2>/dev/null | head -1)")")")"
 fi
+[ -d "$CLAUDE_PLUGIN_ROOT/templates" ] || { echo "CLAUDE_PLUGIN_ROOT not resolved: $CLAUDE_PLUGIN_ROOT"; exit 1; }
+echo "Project root: $PROJECT_ROOT"
 ```
 
-**Case B: A root `CLAUDE.md` already exists.** Leave it completely untouched. Print exactly:
+### Step 2 — Run the scaffold
 
-> `CLAUDE.md` already exists — left as-is. Note: baseline agent behavior now comes from the `core` plugin (injected via the SessionStart hook). You may want to remove generic protocol prose from `CLAUDE.md` that is now duplicated by the plugin baseline.
-
-### Step 6 — Patch `.claude/settings.json`
-
-Read the existing `.claude/settings.json` if it exists (or treat it as `{}`). Merge in the required keys without clobbering any existing top-level keys or nested values the user already has.
-
-The JSON shape to merge follows exactly the convention used in Claude Code settings files. The required additions are:
-
-```json
-{
-  "extraKnownMarketplaces": {
-    "spark": {
-      "source": {
-        "source": "github",
-        "repo": "bim-ba/ai"
-      }
-    }
-  },
-  "enabledPlugins": {
-    "core@spark": true
-  }
-}
-```
-
-If `--data` was passed, also add to `enabledPlugins`:
-
-```json
-{
-  "enabledPlugins": {
-    "core@spark": true,
-    "data@spark": true
-  }
-}
-```
-
-**Merge rules (apply in this order):**
-
-1. If `.claude/settings.json` does not exist, write the above JSON (with the appropriate `enabledPlugins` for flags) as the entire file.
-2. If it exists, read it as JSON. For `extraKnownMarketplaces`, add the `spark` key only if it is not already present. For `enabledPlugins`, add `core@spark: true` (and `data@spark: true` if `--data`) only if those keys are not already present. All other existing keys at every level are preserved verbatim.
-3. Write the merged JSON back to `.claude/settings.json` with 2-space indentation.
-
-Example: if the existing file already contains `"superpowers@claude-plugins-official": true` in `enabledPlugins`, the result must contain both that entry and the new `core@spark` entry.
-
-Concrete approach using Python (available on most systems):
+Pass `--data` only if the user invoked `/setup --data` (also enables the `data` plugin):
 
 ```bash
-# PROJECT_ROOT must be exported (Step 1 does this) so the heredoc can read it.
-# If the user passed --data, export SETUP_DATA=1 first so the merge enables the data plugin:
-#   export SETUP_DATA=1
-python3 - <<'EOF'
-import json, os, sys
-
-settings_path = os.path.join(os.environ["PROJECT_ROOT"], ".claude", "settings.json")
-enable_data   = os.environ.get("SETUP_DATA", "") == "1"
-
-# Load existing settings or start empty
-if os.path.exists(settings_path):
-    with open(settings_path) as f:
-        settings = json.load(f)
-else:
-    settings = {}
-
-# Merge extraKnownMarketplaces
-mkts = settings.setdefault("extraKnownMarketplaces", {})
-if "spark" not in mkts:
-    mkts["spark"] = {
-        "source": {
-            "source": "github",
-            "repo": "bim-ba/ai"
-        }
-    }
-
-# Merge enabledPlugins
-plugins = settings.setdefault("enabledPlugins", {})
-if "core@spark" not in plugins:
-    plugins["core@spark"] = True
-if enable_data and "data@spark" not in plugins:
-    plugins["data@spark"] = True
-
-os.makedirs(os.path.dirname(settings_path), exist_ok=True)
-with open(settings_path, "w") as f:
-    json.dump(settings, f, indent=2)
-    f.write("\n")
-
-print("settings.json written.")
-EOF
+uv run --no-project "$CLAUDE_PLUGIN_ROOT/skills/setup/scripts/bootstrap.py" \
+  --project-root "$PROJECT_ROOT" --plugin-root "$CLAUDE_PLUGIN_ROOT"   # add --data when requested
 ```
 
-### Step 7 — Print summary
+`bootstrap.py` is idempotent — it creates only missing artifacts and prints a CREATED/SKIPPED/PATCHED summary. It never overwrites `CLAUDE.md`, never writes drift-log entries, and merges `.claude/settings.json` without clobbering existing keys.
 
-Print a summary table of every file that was **created** or **skipped**, followed by next steps.
+### Step 3 — Verify
 
-Example output format:
+```bash
+uv run --no-project "$CLAUDE_PLUGIN_ROOT/skills/setup/scripts/verify.py" --project-root "$PROJECT_ROOT"
+```
+
+Expected: `verify OK`. On `verify FAILED`, report the listed problems to the user.
+
+### Step 4 — Report
+
+Relay the `bootstrap.py` summary table to the user, then print next steps:
 
 ```
-/setup complete
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- CREATED  .claude/drift-log/open/              (empty dir)
- CREATED  .claude/drift-log/applied/           (empty dir)
- CREATED  .claudelintrc.json
- CREATED  .claudelintignore
- CREATED  .claude/skills/README.md
- CREATED  CLAUDE.md
- CREATED  AGENTS.md  →  CLAUDE.md
- PATCHED  .claude/settings.json               (spark marketplace + core plugin)
- SKIPPED  [any files that already existed]
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Next steps:
   1. git add .claude/ CLAUDE.md AGENTS.md .claudelintrc.json .claudelintignore
   2. git commit -m "chore: bootstrap spark scaffold"
@@ -254,21 +102,7 @@ Next steps:
 
 ## Post-checks
 
-After running all steps, verify:
-
-1. `.claude/drift-log/open/` and `.claude/drift-log/applied/` exist as directories.
-2. `.claude/settings.json` contains the `spark` key under `extraKnownMarketplaces` and `core@spark` under `enabledPlugins`. Quick check:
-   ```bash
-   python3 -c "import json, os; p=os.path.join(os.environ['PROJECT_ROOT'],'.claude','settings.json'); \
-     s=json.load(open(p)); \
-     assert 'spark' in s.get('extraKnownMarketplaces', {}); \
-     assert 'core@spark' in s.get('enabledPlugins', {}); print('settings.json OK')"
-   ```
-3. If `CLAUDE.md` was created, confirm `AGENTS.md` is a symlink to it:
-   ```bash
-   readlink "$PROJECT_ROOT/AGENTS.md"   # should print: CLAUDE.md
-   ```
-4. No existing files were overwritten. The skipped list in the summary accounts for every file that already existed.
+Post-checks are performed by `verify.py` in Workflow Step 3 (drift-log dirs, settings.json keys, AGENTS.md symlink). On `verify FAILED`, surface the listed problems.
 
 ---
 

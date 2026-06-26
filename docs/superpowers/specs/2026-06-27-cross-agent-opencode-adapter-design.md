@@ -10,8 +10,8 @@ Make the `spark` marketplace consumable by **opencode** as a first-class target,
 without forking content. Today spark targets Claude Code only: a git-resolved
 marketplace (`.claude-plugin/marketplace.json`) plus a `core` plugin whose generic
 behavior is injected by a `SessionStart` hook and whose drift-log nudge is a `Stop`
-hook. This phase adds an opencode adapter — published to npm as `@bim-ba/ai` — that
-delivers the same skills, the same always-on behaviour-protocol, and the same
+hook. This phase adds an opencode adapter — published to npm as `@bim-ba/ai-opencode`
+— that delivers the same skills, the same always-on behaviour-protocol, and the same
 drift-log reminder, **from a single shared source** in one monorepo.
 
 This is **Phase A** of a larger cross-agent effort. **Phase B** (CI matrix +
@@ -24,7 +24,7 @@ The full idea ("matrix CI + cross-agent support") decomposes into:
 - **Phase A — this spec:** opencode adapter + monorepo scaffolding. Makes spark
   cross-agent.
 - **Phase B — separate spec:** CI (full lint + e2e `/setup` matrix, deterministic),
-  opencode-smoke job, and npm `publish`-on-tag for `@bim-ba/ai`. Depends on A.
+  opencode-smoke job, and npm `publish`-on-tag for `@bim-ba/ai-opencode`. Depends on A.
 
 ## Decisions locked (from brainstorming)
 
@@ -35,10 +35,17 @@ The full idea ("matrix CI + cross-agent support") decomposes into:
 - **Claude Code install unchanged:** `/plugin marketplace add bim-ba/ai` keeps
   working. `.claude-plugin/marketplace.json` stays at repo root; the `plugins/`
   layout is untouched.
-- **opencode delivery: npm, scoped `@bim-ba/ai`** (public). Consumer adds one line:
-  `"plugin": ["@bim-ba/ai"]`. opencode does **not** accept git/github specs in the
-  `plugin` array (npm name, `file://`, or local path only — verified via opencode
-  docs), so npm is the path to a clean one-liner with full feature parity.
+- **opencode delivery: npm, scoped `@bim-ba/ai-opencode`** (public). Consumer adds
+  one line: `"plugin": ["@bim-ba/ai-opencode"]`. opencode does **not** accept
+  git/github specs in the `plugin` array (npm name, `file://`, or local path only —
+  verified via opencode docs), so npm is the path to a clean one-liner with full
+  feature parity.
+  - **Naming rule: `@bim-ba/ai-<agent>`**, mirroring `github.com/bim-ba/ai`. The
+    package is the opencode *adapter*, not the whole project, so the platform marker
+    is honest (and matches the opencode ecosystem's `opencode-*` convention for npm
+    discoverability). The bare `@bim-ba/ai` is intentionally reserved for a possible
+    future umbrella. The Claude marketplace name `spark` stays a Claude-internal
+    identifier and does not leak into npm.
 - **No source duplication.** Skills + `behaviour-protocol.md` have exactly one home
   in the repo (the Claude plugin tree, whose loader is the strictest). The npm
   package receives **build-time copies**, not a second source.
@@ -60,10 +67,10 @@ The full idea ("matrix CI + cross-agent support") decomposes into:
 The consumer writes exactly one line in their `opencode.json`:
 
 ```json
-{ "$schema": "https://opencode.ai/config.json", "plugin": ["@bim-ba/ai"] }
+{ "$schema": "https://opencode.ai/config.json", "plugin": ["@bim-ba/ai-opencode"] }
 ```
 
-On load, `@bim-ba/ai`'s plugin function returns a `Hooks` object whose `config(cfg)`
+On load, `@bim-ba/ai-opencode`'s plugin function returns a `Hooks` object whose `config(cfg)`
 hook mutates the live merged config so the consumer never hand-wires paths:
 
 - appends the package's bundled `behaviour-protocol.md` to `cfg.instructions`
@@ -71,8 +78,9 @@ hook mutates the live merged config so the consumer never hand-wires paths:
 - appends the package's bundled skills directory to `cfg.skills.paths`
   (so opencode discovers every `SKILL.md` spark ships).
 
-Because the package is installed under `~/.cache/opencode/node_modules/@bim-ba/ai/`,
-its bundled assets are on local disk — satisfying opencode's "skills must exist
+Because the package is installed under
+`~/.cache/opencode/node_modules/@bim-ba/ai-opencode/`, its bundled assets are on
+local disk — satisfying opencode's "skills must exist
 locally" constraint. (Verified: `config` hook may mutate merged config and register
 instructions/skills; `skills.paths` is scanned recursively for `**/SKILL.md`.)
 
@@ -98,7 +106,7 @@ ai/                                    # repo root = github.com/bim-ba/ai
 ├── opencode.json                      # makes the repo itself a working opencode project (dogfood + Phase B smoke)
 ├── .opencode/
 │   └── plugin/
-│       └── spark.ts                   # one-line re-export of packages/opencode-spark (local dogfood)
+│       └── spark.ts                   # one-line re-export of packages/ai-opencode (local dogfood)
 │
 ├── plugins/                           # Claude Code adapter — layout fixed by loader, UNCHANGED
 │   ├── core/
@@ -113,8 +121,8 @@ ai/                                    # repo root = github.com/bim-ba/ai
 │       └── skills/
 │
 ├── packages/
-│   └── opencode-spark/                # opencode adapter — published as @bim-ba/ai
-│       ├── package.json               # name "@bim-ba/ai", publishConfig.access public, engines.opencode
+│   └── ai-opencode/                   # opencode adapter — published as @bim-ba/ai-opencode
+│       ├── package.json               # name "@bim-ba/ai-opencode", publishConfig.access public, engines.opencode
 │       ├── src/plugin.ts              # config() injection + session.idle drift-log
 │       ├── scripts/sync-assets.py     # PEP 723 stdlib, uv run — copies canonical assets in (prepare step)
 │       └── (build output: behaviour-protocol.md + skills/ copied here, git-ignored)
@@ -134,8 +142,8 @@ is for running opencode *inside* this repo.
 A `prepare`/`prepack` step copies the canonical assets into the package before
 publish:
 
-- `plugins/core/skills/` + `plugins/data/skills/` → `packages/opencode-spark/skills/`
-- `plugins/core/hooks/behaviour-protocol.md` → `packages/opencode-spark/behaviour-protocol.md`
+- `plugins/core/skills/` + `plugins/data/skills/` → `packages/ai-opencode/skills/`
+- `plugins/core/hooks/behaviour-protocol.md` → `packages/ai-opencode/behaviour-protocol.md`
 
 The copy target is git-ignored (build artifact, never committed) so the source has
 exactly one home. **The sync script is Python stdlib via `uv run`** (PEP 723 header,
@@ -146,7 +154,7 @@ tooling convention, invoked from npm's `prepare` script.
 
 CLAUDE.md currently states **"`uv` is the single tooling prerequisite … Do not
 introduce `jq`, `yq`, or `npx`."** The opencode adapter unavoidably introduces a
-Node/bun toolchain for `packages/opencode-spark` (the plugin runtime is TypeScript;
+Node/bun toolchain for `packages/ai-opencode` (the plugin runtime is TypeScript;
 npm publish needs npm/bun). This phase therefore **amends the convention** to scope
 it: *uv-only applies to repo tooling and the Claude/Python side; the opencode adapter
 under `packages/` uses the npm/bun toolchain.* The asset-sync script stays Python/uv
@@ -154,13 +162,13 @@ to keep "move files around" in one language. CLAUDE.md is updated to reflect thi
 
 ## Components & interfaces
 
-- **`packages/opencode-spark/src/plugin.ts`** — exports the opencode plugin function.
+- **`packages/ai-opencode/src/plugin.ts`** — exports the opencode plugin function.
   Returns `{ config(cfg), event({event}) }`. Depends on `@opencode-ai/plugin` types.
   Pure: no network, no writes except the reminder it emits.
-- **`packages/opencode-spark/scripts/sync-assets.py`** — copies canonical assets into
+- **`packages/ai-opencode/scripts/sync-assets.py`** — copies canonical assets into
   the package. stdlib only, idempotent, `uv run`-invoked. Input: repo root. Output:
   the git-ignored `skills/` + `behaviour-protocol.md` inside the package.
-- **`packages/opencode-spark/package.json`** — name `@bim-ba/ai`, `type: module`,
+- **`packages/ai-opencode/package.json`** — name `@bim-ba/ai-opencode`, `type: module`,
   `publishConfig.access: public`, `engines.opencode` (minimum version — **verify
   latest stable at implementation time, do not guess**), `files` whitelist (dist +
   synced assets), `prepare` → runs sync-assets.

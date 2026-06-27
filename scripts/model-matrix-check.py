@@ -32,6 +32,9 @@ from pathlib import Path
 OPENROUTER_MODELS_URL = "https://openrouter.ai/api/v1/models?order=top-weekly"
 DEFAULT_N = 10
 MODEL_TIMEOUT = 120  # per-model opencode run cap; a healthy free model answers well under this
+# opencode uses a separate "small model" for auxiliary calls (title/summary). Unset, it
+# falls back to a paid default — so pin it to a free model to keep the matrix at $0.
+SMALL_MODEL = "openrouter/openrouter/free"
 PROMPT = (
     "List the names of the skills available to you in this project. "
     'Reply with ONLY a JSON array of the bare skill names, e.g. ["alpha","beta"]. '
@@ -158,6 +161,13 @@ def format_model_section(model_id, result, raw_output):
     return "\n".join(lines)
 
 
+def config_with_small_model(cfg, small_model=SMALL_MODEL):
+    """Return a copy of an opencode config dict with small_model pinned (free aux calls)."""
+    new = dict(cfg)
+    new["small_model"] = small_model
+    return new
+
+
 def run_opencode(model_id, prompt=PROMPT, timeout=MODEL_TIMEOUT):
     """Run a model through opencode in this repo; return (returncode, combined output)."""
     proc = subprocess.run(
@@ -195,21 +205,36 @@ def main():
     print(f"# opencode skill-load matrix\n")
     print(f"Ground truth — {len(ground_truth)} repo skills: "
           f"{', '.join(sorted(ground_truth))}\n")
-    print(f"Probing {len(models)} free models (OpenRouter weekly-popularity order):\n")
+    print(f"Probing {len(models)} free models (OpenRouter weekly-popularity order); "
+          f"opencode small_model pinned to `{SMALL_MODEL}` so auxiliary calls stay free.\n")
+
+    # Pin opencode's auxiliary (small) model to a free model for the duration of the
+    # matrix, then restore the repo's committed config. Without this, opencode's
+    # title/summary calls hit a paid default model.
+    oc_path = repo_root / "opencode.json"
+    original_oc = oc_path.read_text(encoding="utf-8") if oc_path.exists() else None
+    if original_oc is not None:
+        oc_path.write_text(
+            json.dumps(config_with_small_model(json.loads(original_oc)), indent=2) + "\n",
+            encoding="utf-8")
 
     rows, sections = [], []
-    for model_id in models:
-        try:
-            _, raw = run_opencode(model_id)
-        except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-            raw = f"opencode run failed: {e}"
-        reported = extract_json_array(raw)
-        result = validate_skills(reported, ground_truth)
-        result["reported"] = reported
-        mark = "✅" if result["ok"] else "❌"
-        miss = "—" if not result["missing"] else f"{len(result['missing'])} missing"
-        rows.append(f"| `{model_id}` | {mark} | {miss} |")
-        sections.append(format_model_section(model_id, result, raw))
+    try:
+        for model_id in models:
+            try:
+                _, raw = run_opencode(model_id)
+            except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+                raw = f"opencode run failed: {e}"
+            reported = extract_json_array(raw)
+            result = validate_skills(reported, ground_truth)
+            result["reported"] = reported
+            mark = "✅" if result["ok"] else "❌"
+            miss = "—" if not result["missing"] else f"{len(result['missing'])} missing"
+            rows.append(f"| `{model_id}` | {mark} | {miss} |")
+            sections.append(format_model_section(model_id, result, raw))
+    finally:
+        if original_oc is not None:
+            oc_path.write_text(original_oc, encoding="utf-8")
 
     print("| model | skills loaded | gaps |")
     print("|-------|---------------|------|")

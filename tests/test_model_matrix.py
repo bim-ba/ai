@@ -89,6 +89,15 @@ class TestValidate(unittest.TestCase):
         self.assertEqual(r["missing"], sorted(self.GT))
 
 
+class TestSmallModel(unittest.TestCase):
+    def test_pins_small_model_without_mutating_original(self):
+        cfg = {"instructions": ["x"], "skills": {"paths": ["p"]}}
+        out = mm.config_with_small_model(cfg, "openrouter/openrouter/free")
+        self.assertEqual(out["small_model"], "openrouter/openrouter/free")
+        self.assertEqual(out["instructions"], ["x"])  # other keys preserved
+        self.assertNotIn("small_model", cfg)  # original untouched
+
+
 class TestFormat(unittest.TestCase):
     def test_section_has_details_and_verdict(self):
         result = {"ok": False, "missing": ["setup"], "extra": [], "reported": ["data"]}

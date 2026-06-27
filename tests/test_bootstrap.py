@@ -7,7 +7,9 @@ import json
 import subprocess
 import sys
 import tempfile
+import types
 import unittest
+import unittest.mock
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -22,7 +24,7 @@ def run_bootstrap(project_root, with_plugins="core"):
     import importlib.util
     import io
 
-    if hasattr(os.symlink, "_mock_name"):
+    if isinstance(os.symlink, unittest.mock.NonCallableMock):
         # os.symlink is mocked; run bootstrap in-process
         spec = importlib.util.spec_from_file_location("bootstrap", BOOTSTRAP)
         bootstrap_module = importlib.util.module_from_spec(spec)
@@ -51,13 +53,7 @@ def run_bootstrap(project_root, with_plugins="core"):
             sys.stderr = old_stderr
 
         # Return a result object that mimics subprocess.CompletedProcess
-        class Result:
-            pass
-        r = Result()
-        r.returncode = returncode
-        r.stdout = stdout
-        r.stderr = stderr
-        return r
+        return types.SimpleNamespace(returncode=returncode, stdout=stdout, stderr=stderr)
     else:
         # Normal subprocess execution
         return subprocess.run(

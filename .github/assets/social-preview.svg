@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" font-family="DejaVu Sans, Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0D1117"/>
+      <stop offset="1" stop-color="#171734"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7F8CF0"/>
+      <stop offset="1" stop-color="#5A67D8"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <!-- subtle border frame -->
+  <rect x="20" y="20" width="1240" height="600" rx="22" fill="none" stroke="#2A2E45" stroke-width="2"/>
+
+  <!-- decorative faint sparkle, top-right -->
+  <g opacity="0.10" fill="#5A67D8">
+    <path d="M1090 110 l16 44 44 16 -44 16 -16 44 -16 -44 -44 -16 44 -16 z"/>
+  </g>
+
+  <!-- wordmark -->
+  <text x="110" y="300" font-size="248" font-weight="700" fill="#FFFFFF" letter-spacing="-6">ai</text>
+  <!-- accent sparkle next to wordmark -->
+  <path d="M372 150 l12 34 34 12 -34 12 -12 34 -12 -34 -34 -12 34 -12 z" fill="url(#accent)"/>
+
+  <!-- tagline -->
+  <text x="116" y="372" font-size="44" font-weight="700" fill="#E6E9F2">Claude Code &amp; opencode plugin marketplace</text>
+  <text x="116" y="416" font-size="27" fill="#9AA4BF">reusable agent behaviour, workflow &amp; data-engineering skills</text>
+
+  <!-- feature chips -->
+  <g font-size="24" fill="#C9D1E6">
+    <g>
+      <rect x="116" y="470" width="232" height="56" rx="28" fill="#1B2030" stroke="#343B57" stroke-width="1.5"/>
+      <text x="232" y="506" text-anchor="middle">agent behaviour</text>
+    </g>
+    <g>
+      <rect x="364" y="470" width="120" height="56" rx="28" fill="#1B2030" stroke="#343B57" stroke-width="1.5"/>
+      <text x="424" y="506" text-anchor="middle">skills</text>
+    </g>
+    <g>
+      <rect x="500" y="470" width="130" height="56" rx="28" fill="#1B2030" stroke="#343B57" stroke-width="1.5"/>
+      <text x="565" y="506" text-anchor="middle">/setup</text>
+    </g>
+    <g>
+      <rect x="646" y="470" width="160" height="56" rx="28" fill="#1B2030" stroke="#343B57" stroke-width="1.5"/>
+      <text x="726" y="506" text-anchor="middle">drift-logs</text>
+    </g>
+    <g>
+      <rect x="822" y="470" width="100" height="56" rx="28" fill="#1B2030" stroke="#343B57" stroke-width="1.5"/>
+      <text x="872" y="506" text-anchor="middle">data</text>
+    </g>
+  </g>
+
+  <!-- footer -->
+  <text x="116" y="582" font-size="26" font-weight="700" fill="#5A67D8">github.com/bim-ba/ai</text>
+  <text x="1164" y="582" font-size="22" text-anchor="end" fill="#6B7280">Claude Code · opencode</text>
+</svg>

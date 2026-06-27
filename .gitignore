@@ -6,3 +6,8 @@
 # AI-agent related
 PROMPT.md
 .mcp.json
+
+# opencode adapter — build artifacts (synced from the canonical source; never committed)
+packages/ai-opencode/skills/
+packages/ai-opencode/behaviour-protocol.md
+packages/ai-opencode/node_modules/

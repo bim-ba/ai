@@ -18,7 +18,7 @@
 
 ## Conventions
 
-- **`uv` is the single tooling prerequisite.** The SessionStart hook and `/setup` run Python through `uv run --no-project`. Do not introduce `jq`, `yq`, or `npx`.
+- **`uv` is the tooling prerequisite for the Claude Code side and all repo Python.** The SessionStart hook and `/setup` run Python through `uv run`; do not introduce `jq`, `yq`, or `npx`. The opencode adapter under `packages/ai-opencode/` is the one exception: it uses the npm/Bun toolchain (the plugin is TypeScript loaded by opencode). Its asset-sync script stays Python/`uv`.
 - **Extracted scripts are stdlib-only** with a PEP 723 header (`requires-python = ">=3.9"`, `dependencies = []`), run via `uv run`.
 - **Skills follow** `plugins/core/templates/skills-authoring-standard.md` (workflow vs rulebook categories, naming convention, self-contained structure).
 - **Plugins cannot inject always-on instructions** — generic behavior goes through the `core` SessionStart hook, never a shipped CLAUDE.md.

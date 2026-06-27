@@ -1,0 +1,23 @@
+{
+  "name": "@bim-ba/ai-opencode",
+  "version": "0.1.0",
+  "description": "opencode adapter for the ai agent toolkit — injects the shared behaviour protocol + skills and a drift-log reminder.",
+  "type": "module",
+  "exports": {
+    ".": "./src/plugin.ts"
+  },
+  "files": ["src/plugin.ts", "skills", "behaviour-protocol.md"],
+  "engines": {
+    "opencode": "^1.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "test": "bun test",
+    "prepack": "uv run --no-project scripts/sync-assets.py --repo-root ../.. --package-root ."
+  },
+  "devDependencies": {
+    "@opencode-ai/plugin": "^1.17.11"
+  }
+}

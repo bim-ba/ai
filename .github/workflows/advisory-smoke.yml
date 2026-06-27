@@ -33,7 +33,7 @@ jobs:
           echo "$HOME/.opencode/bin" >> "$GITHUB_PATH"
       - name: Run the skill-load matrix across popular free models
         if: steps.guard.outputs.run == 'true'
-        timeout-minutes: 15
+        timeout-minutes: 25
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: uv run --no-project scripts/model-matrix-check.py | tee -a "$GITHUB_STEP_SUMMARY"

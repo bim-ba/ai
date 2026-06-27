@@ -30,7 +30,8 @@ import urllib.request
 from pathlib import Path
 
 OPENROUTER_MODELS_URL = "https://openrouter.ai/api/v1/models?order=top-weekly"
-DEFAULT_N = 4
+DEFAULT_N = 10
+MODEL_TIMEOUT = 120  # per-model opencode run cap; a healthy free model answers well under this
 PROMPT = (
     "List the names of the skills available to you in this project. "
     'Reply with ONLY a JSON array of the bare skill names, e.g. ["alpha","beta"]. '
@@ -157,7 +158,7 @@ def format_model_section(model_id, result, raw_output):
     return "\n".join(lines)
 
 
-def run_opencode(model_id, prompt=PROMPT, timeout=180):
+def run_opencode(model_id, prompt=PROMPT, timeout=MODEL_TIMEOUT):
     """Run a model through opencode in this repo; return (returncode, combined output)."""
     proc = subprocess.run(
         ["opencode", "run", "--model", f"openrouter/{model_id}", prompt],

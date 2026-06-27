@@ -1,31 +1,31 @@
 ---
 name: setup
-description: "Use when bootstrapping a new (or existing) project to reuse the shared spark conventions — scaffolds drift-log, claudelint config, a thin CLAUDE.md, and wires the requested spark plugins (`core` always) into `.claude/settings.json`. Idempotent."
+description: "Use when bootstrapping a new (or existing) project to reuse the shared ai conventions — scaffolds drift-log, claudelint config, a thin CLAUDE.md, and wires the requested ai plugins (`core` always) into `.claude/settings.json`. Idempotent."
 type: skill
 category: workflow
 ---
 
 # /setup — Project Bootstrap Skill
 
-Scaffolds a target project with the spark conventions: drift-log, claudelint config, skills authoring standard, a thin CLAUDE.md, and the required `.claude/settings.json` plugin wiring. Safe to re-run — only creates what is missing.
+Scaffolds a target project with the ai conventions: drift-log, claudelint config, skills authoring standard, a thin CLAUDE.md, and the required `.claude/settings.json` plugin wiring. Safe to re-run — only creates what is missing.
 
 ## Purpose
 
 ### What this skill enables
 
-Brings a project into the spark ecosystem in one shot: creates the directory structure and config files every agent-aware repo needs, and wires the requested spark plugins (core always) into `.claude/settings.json` so Claude Code resolves the marketplace correctly.
+Brings a project into the ai ecosystem in one shot: creates the directory structure and config files every agent-aware repo needs, and wires the requested ai plugins (core always) into `.claude/settings.json` so Claude Code resolves the marketplace correctly.
 
 ### When to use it
 
 - Bootstrapping a brand-new project repository.
-- Onboarding an existing repository that has no spark scaffold yet.
+- Onboarding an existing repository that has no ai scaffold yet.
 - Re-running `/setup` after the first pass to catch any files that were missing (idempotent — always safe).
 
 ### When NOT to use it
 
 - For updating or replacing an existing `CLAUDE.md` with new content (edit it directly instead).
 - For plugin-specific setup steps that are out of scope of the core scaffold (e.g., data-pipeline config, secrets management).
-- When the project already has a fully wired spark setup and you only want to update one piece (use Edit directly).
+- When the project already has a fully wired ai setup and you only want to update one piece (use Edit directly).
 
 ---
 
@@ -49,7 +49,7 @@ Before running any step, verify:
    ```
    All template source paths below use `${CLAUDE_PLUGIN_ROOT}/templates/`.
 3. **Parse flags from the user's invocation:**
-   - `--with NAMES` → comma-separated spark plugin names to enable (e.g. `--with core,data`). `core` is always enabled even if omitted. Defaults to `core` when the flag is absent (so a bare `/setup` enables just `core`). Pass the value straight through to `bootstrap.py --with`.
+   - `--with NAMES` → comma-separated ai plugin names to enable (e.g. `--with core,data`). `core` is always enabled even if omitted. Defaults to `core` when the flag is absent (so a bare `/setup` enables just `core`). Pass the value straight through to `bootstrap.py --with`.
 
 ---
 
@@ -78,7 +78,7 @@ uv run --no-project "$CLAUDE_PLUGIN_ROOT/skills/setup/scripts/bootstrap.py" \
   --with "core"   # replace "core" with the user's --with list, e.g. "core,data"; core is always enabled
 ```
 
-`bootstrap.py` is idempotent — it creates only missing artifacts and prints a CREATED/SKIPPED/PATCHED summary. It never overwrites `CLAUDE.md`, never writes drift-log entries, and merges `.claude/settings.json` without clobbering existing keys. Each requested plugin name (plus `core`, always) is written as `<name>@spark: true` into `.claude/settings.json`, non-clobber.
+`bootstrap.py` is idempotent — it creates only missing artifacts and prints a CREATED/SKIPPED/PATCHED summary. It never overwrites `CLAUDE.md`, never writes drift-log entries, and merges `.claude/settings.json` without clobbering existing keys. Each requested plugin name (plus `core`, always) is written as `<name>@ai: true` into `.claude/settings.json`, non-clobber.
 
 ### Step 3 — Verify
 
@@ -95,7 +95,7 @@ Relay the `bootstrap.py` summary table to the user, then print next steps:
 ```
 Next steps:
   1. git add .claude/ CLAUDE.md AGENTS.md .claudelintrc.json .claudelintignore
-  2. git commit -m "chore: bootstrap spark scaffold"
+  2. git commit -m "chore: bootstrap ai scaffold"
   3. Edit CLAUDE.md — fill in Project Overview and project-specific conventions.
 ```
 

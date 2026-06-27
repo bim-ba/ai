@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
-  "name": "spark",
+  "name": "ai",
   "version": "0.1.0",
   "owner": { "name": "bim-ba", "email": "careless.sava@gmail.com" },
   "plugins": [

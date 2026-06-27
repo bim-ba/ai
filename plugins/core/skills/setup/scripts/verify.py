@@ -2,7 +2,7 @@
 # requires-python = ">=3.9"
 # dependencies = []
 # ///
-"""Post-checks for spark /setup. Exits non-zero on any failure."""
+"""Post-checks for ai /setup. Exits non-zero on any failure."""
 import argparse
 import json
 import sys
@@ -25,10 +25,10 @@ def main():
         errors.append("missing .claude/settings.json")
     else:
         s = json.loads(settings_path.read_text())
-        if "spark" not in s.get("extraKnownMarketplaces", {}):
-            errors.append("settings.json: extraKnownMarketplaces.spark absent")
-        if "core@spark" not in s.get("enabledPlugins", {}):
-            errors.append("settings.json: enabledPlugins.core@spark absent")
+        if "ai" not in s.get("extraKnownMarketplaces", {}):
+            errors.append("settings.json: extraKnownMarketplaces.ai absent")
+        if "core@ai" not in s.get("enabledPlugins", {}):
+            errors.append("settings.json: enabledPlugins.core@ai absent")
 
     agents = root / "AGENTS.md"
     if agents.is_symlink() and str(agents.readlink()) != "CLAUDE.md":

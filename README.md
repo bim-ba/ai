@@ -1,4 +1,4 @@
-# spark
+# ai
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-5A67D8)](https://docs.claude.com/en/docs/claude-code)
@@ -18,6 +18,10 @@ A Claude Code plugin marketplace providing reusable agent behavior, project scaf
 /plugin marketplace add bim-ba/ai
 ```
 
+> **Migrating from a `spark`-era install?** Re-run `/setup` — it adds the new
+> `core@ai` / `data@ai` keys to `.claude/settings.json`. The old `@spark` keys are
+> left untouched (the scaffold never clobbers); remove them by hand if you like.
+
 Then enable the plugins you need — `core` for any project, `data` for data projects.
 
 ## Domains
@@ -31,7 +35,7 @@ Then enable the plugins you need — `core` for any project, `data` for data pro
 
 | Skill | Domain | What it does | Triggers |
 |-------|--------|--------------|----------|
-| `setup` | core | Bootstraps a project with spark conventions (drift-log dirs, claudelint config, a thin CLAUDE.md + AGENTS.md, plugin wiring). Idempotent. | Manual: `/setup` |
+| `setup` | core | Bootstraps a project with ai conventions (drift-log dirs, claudelint config, a thin CLAUDE.md + AGENTS.md, plugin wiring). Idempotent. | Manual: `/setup` |
 | `creating-drift-logs` | core | Captures a divergence between actual behavior and codified instructions as an immutable drift-log entry, so good conventions can be promoted later. | Auto (8 drift triggers); nudged by the Stop hook |
 | `reviewing-drift-logs` | core | Triages the drift-log — promotes open→applied, checks staleness, compacts entries, codifies insights into rules. | Manual |
 | `reviewing-agent-instructions` | core | Audits the agent-instruction surface (CLAUDE.md, skills, drift-log, hooks) for pollution, duplication, dead refs, and contradictions. Report-only, no auto-fix. | Manual |
@@ -57,7 +61,7 @@ In any project:
 /setup --with data       # same as above — core is always enabled
 ```
 
-`/setup` creates the drift-log directories, claudelint config, a skills-authoring standard, a thin `CLAUDE.md` (+ `AGENTS.md` symlink), and wires the `spark` marketplace into `.claude/settings.json`. It is idempotent — safe to re-run.
+`/setup` creates the drift-log directories, claudelint config, a skills-authoring standard, a thin `CLAUDE.md` (+ `AGENTS.md` symlink), and wires the `ai` marketplace into `.claude/settings.json`. It is idempotent — safe to re-run.
 
 ## MCP configuration
 

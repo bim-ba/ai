@@ -51,12 +51,15 @@ def repo_skill_names(repo_root):
     return names
 
 
-def select_popular_free_models(payload, n=DEFAULT_N):
-    """Return up to n free model ids, preserving the payload's order.
+def select_popular_free_chat_models(payload, n=DEFAULT_N):
+    """Return up to n free *chat* model ids, preserving the payload's order.
 
     The payload is expected to be the `?order=top-weekly` response, already sorted
-    server-side by popularity, so we only filter (free = prompt and completion both
-    priced at 0) and keep the incoming order.
+    server-side by popularity. We filter to models that are both:
+      - free  (prompt and completion both priced at 0), and
+      - chat-capable — `tools` in supported_parameters. Tool-calling is a reliable
+        chat-model signal: it excludes classifiers/safety/embedding models, and it
+        is what opencode needs to drive a model as an agent in the first place.
     """
     out = []
     for m in payload.get("data", []):
@@ -66,7 +69,8 @@ def select_popular_free_models(payload, n=DEFAULT_N):
                     and float(pricing.get("completion", 1)) == 0.0)
         except (TypeError, ValueError):
             free = False
-        if free and m.get("id"):
+        chat = "tools" in (m.get("supported_parameters") or [])
+        if free and chat and m.get("id"):
             out.append(m["id"])
     return out[:n]
 
@@ -182,9 +186,9 @@ def main():
     except (urllib.error.URLError, TimeoutError) as e:
         print(f"could not fetch model list: {e}", file=sys.stderr)
         return 1
-    models = select_popular_free_models(payload)
+    models = select_popular_free_chat_models(payload)
     if not models:
-        print("no free models currently available — advisory skip.")
+        print("no free chat models currently available — advisory skip.")
         return 0
 
     print(f"# opencode skill-load matrix\n")

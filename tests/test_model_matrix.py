@@ -24,22 +24,31 @@ class TestGroundTruth(unittest.TestCase):
 
 class TestSelect(unittest.TestCase):
     def _payload(self):
-        # already in popularity order; mix of free and paid
+        # already in popularity order; mix of free/paid and chat/non-chat
         return {"data": [
-            {"id": "owl/top:free", "pricing": {"prompt": "0", "completion": "0"}},
-            {"id": "paid/second", "pricing": {"prompt": "0.001", "completion": "0"}},
-            {"id": "qwen/third:free", "pricing": {"prompt": 0, "completion": 0}},
-            {"id": "nv/fourth:free", "pricing": {"prompt": "0", "completion": "0"}},
+            {"id": "owl/top:free", "pricing": {"prompt": "0", "completion": "0"},
+             "supported_parameters": ["tools", "temperature"]},
+            {"id": "paid/second", "pricing": {"prompt": "0.001", "completion": "0"},
+             "supported_parameters": ["tools"]},
+            {"id": "safety/classifier:free", "pricing": {"prompt": "0", "completion": "0"},
+             "supported_parameters": []},  # free but NOT a chat model (no tools)
+            {"id": "qwen/third:free", "pricing": {"prompt": 0, "completion": 0},
+             "supported_parameters": ["tools", "structured_outputs"]},
+            {"id": "nv/fourth:free", "pricing": {"prompt": "0", "completion": "0"},
+             "supported_parameters": ["tools"]},
         ]}
 
-    def test_keeps_free_and_preserves_order(self):
+    def test_keeps_free_chat_models_and_preserves_order(self):
         self.assertEqual(
-            mm.select_popular_free_models(self._payload()),
+            mm.select_popular_free_chat_models(self._payload()),
             ["owl/top:free", "qwen/third:free", "nv/fourth:free"],
         )
 
+    def test_excludes_non_chat_free_models(self):
+        self.assertNotIn("safety/classifier:free", mm.select_popular_free_chat_models(self._payload()))
+
     def test_respects_n_cap(self):
-        self.assertEqual(mm.select_popular_free_models(self._payload(), n=1), ["owl/top:free"])
+        self.assertEqual(mm.select_popular_free_chat_models(self._payload(), n=1), ["owl/top:free"])
 
 
 class TestExtract(unittest.TestCase):

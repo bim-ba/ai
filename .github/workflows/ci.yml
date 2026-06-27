@@ -45,7 +45,7 @@ jobs:
       - uses: astral-sh/setup-uv@v8.2.0
         with:
           python-version: '3.12'
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
       - name: Verify the published tarball contains the synced assets

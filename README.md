@@ -9,20 +9,35 @@ A Claude Code plugin marketplace providing reusable agent behavior, project scaf
 
 ## Requirements
 
-- [`uv`](https://docs.astral.sh/uv/) — **required**. The `core` SessionStart hook and the `/setup` scripts run Python through `uv run`. Without `uv`, the behaviour-protocol injection is skipped (the session still works).
-- Claude Code.
+- [`uv`](https://docs.astral.sh/uv/) — **required** for Claude Code. The `core` SessionStart hook and the `/setup` scripts run Python through `uv run`. Without `uv`, the behaviour-protocol injection is skipped (the session still works).
+- **Claude Code** — install via the marketplace (below). Or **opencode** — install the npm plugin (below). Either works; the skills and behaviour protocol are shared.
 
 ## Install
+
+**Claude Code** — add the marketplace, then enable the plugins you need:
 
 ```
 /plugin marketplace add bim-ba/ai
 ```
 
-> **Migrating from a `spark`-era install?** Re-run `/setup` — it adds the new
-> `core@ai` / `data@ai` keys to `.claude/settings.json`. The old `@spark` keys are
-> left untouched (the scaffold never clobbers); remove them by hand if you like.
+`core` for any project, `data` for data projects.
 
-Then enable the plugins you need — `core` for any project, `data` for data projects.
+**opencode** — add the plugin to your `opencode.json`:
+
+```json
+{ "$schema": "https://opencode.ai/config.json", "plugin": ["@bim-ba/ai-opencode"] }
+```
+
+The plugin self-wires: it injects the shared behaviour protocol as `instructions` and the shared skills into `skills.paths`, and registers a `session.idle` drift-log reminder. Requires opencode (runs on Bun).
+
+## Agent parity
+
+| Capability | Claude Code | opencode |
+|------------|-------------|----------|
+| Skills (`SKILL.md`) | ✅ native | ✅ via `skills.paths` (self-wired) |
+| Behaviour protocol | ✅ SessionStart hook | ✅ injected into `instructions` (self-wired) |
+| Drift-log reminder | ✅ Stop hook | ✅ `session.idle` event hook |
+| Delivery | git marketplace (`bim-ba/ai`) | npm (`@bim-ba/ai-opencode`) |
 
 ## Domains
 

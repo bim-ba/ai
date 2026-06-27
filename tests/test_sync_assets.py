@@ -72,6 +72,19 @@ class SyncAssets(unittest.TestCase):
         for p, content in skills_before.items():
             self.assertEqual((p / "SKILL.md").read_text(), content)  # canonical skills untouched
 
+    def test_errors_clearly_on_wrong_repo_root(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            wrong = Path(tmp) / "not-a-repo"
+            wrong.mkdir()
+            pkg = Path(tmp) / "pkg"
+            r = subprocess.run(
+                [sys.executable, str(SYNC),
+                 "--repo-root", str(wrong), "--package-root", str(pkg)],
+                capture_output=True, text=True)
+            self.assertEqual(r.returncode, 1)
+            self.assertIn("missing expected sources", r.stderr)
+            self.assertFalse(pkg.exists())  # nothing written on failure
+
 
 if __name__ == "__main__":
     unittest.main()

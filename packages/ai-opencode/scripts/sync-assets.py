@@ -21,6 +21,13 @@ def main():
     args = ap.parse_args()
     repo = args.repo_root.resolve()
     pkg = args.package_root.resolve()
+    missing = [rel for rel in [PROTOCOL_SOURCE_REL, *SKILL_SOURCE_RELS] if not (repo / rel).exists()]
+    if missing:
+        sys.stderr.write(
+            "sync-assets: --repo-root {} is missing expected sources: {}\n"
+            "Pass --repo-root pointing at the ai repo root (the dir containing plugins/).\n"
+            .format(repo, ", ".join(missing)))
+        return 1
     pkg.mkdir(parents=True, exist_ok=True)
 
     shutil.copy2(repo / PROTOCOL_SOURCE_REL, pkg / "behaviour-protocol.md")

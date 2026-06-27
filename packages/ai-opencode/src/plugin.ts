@@ -38,6 +38,10 @@ export const AiOpencode: Plugin = async () => {
     },
     event: async ({ event }: { event: { type: string } }) => {
       if (event.type === "session.idle") {
+        // NOTE: whether an event-hook console.log surfaces into the agent's context is
+        // unverified — Claude's Stop hook output is injected; opencode's session.idle is the
+        // nearest analogue but the delivery channel differs. Validated in Phase B smoke;
+        // fallback is to fold this reminder into `instructions` instead of an event hook.
         console.log(DRIFT_LOG_REMINDER)
       }
     },

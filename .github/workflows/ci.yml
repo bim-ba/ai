@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  python:
+    name: setup suite (${{ matrix.os }} · py${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ['3.9', '3.10', '3.11', '3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Run the Python test suite
+        run: uv run --no-project python -m unittest discover -s tests -t tests -p "test_*.py" -v
+
+  plugin:
+    name: opencode plugin tests (bun)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Install plugin deps
+        run: bun install
+        working-directory: packages/ai-opencode
+      - name: Run plugin tests
+        run: bun test
+        working-directory: packages/ai-opencode
+
+  pack:
+    name: npm tarball contents
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v8
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Verify the published tarball contains the synced assets
+        run: uv run --no-project packages/ai-opencode/scripts/check-pack.py --repo-root .

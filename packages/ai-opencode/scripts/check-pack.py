@@ -25,19 +25,17 @@ def main():
         sys.stderr.write("check-pack: sync-assets failed\n")
         return 1
 
-    out = subprocess.run(["npm", "pack", "--dry-run", "--json"],
+    out = subprocess.run(["npm", "pack", "--dry-run", "--json", "--ignore-scripts"],
                          cwd=str(pkg), capture_output=True, text=True)
     if out.returncode != 0:
         sys.stderr.write("check-pack: npm pack failed\n" + out.stderr)
         return 1
 
-    # npm pack output may include non-JSON lines before the JSON array.
-    # Find the start of the JSON array and parse from there.
-    json_start = out.stdout.find('[')
-    if json_start < 0:
-        sys.stderr.write("check-pack: no JSON array in npm pack output\n")
+    parsed = json.loads(out.stdout)
+    if not parsed:
+        sys.stderr.write("check-pack: npm pack returned no package entry\n")
         return 1
-    entries = json.loads(out.stdout[json_start:])[0]["files"]
+    entries = parsed[0]["files"]
     paths = {f["path"] for f in entries}
     has_protocol = "behaviour-protocol.md" in paths
     has_skill = any(p.startswith("skills/") and p.endswith("/SKILL.md") for p in paths)

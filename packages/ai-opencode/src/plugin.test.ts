@@ -2,8 +2,7 @@ import { test, expect, beforeAll, afterAll } from "bun:test"
 import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { applyConfig } from "./plugin"
-import { AiOpencode, DRIFT_LOG_REMINDER } from "./plugin"
+import { applyConfig, AiOpencode, DRIFT_LOG_REMINDER } from "./plugin"
 
 let dir: string
 let protocol: string

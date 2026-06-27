@@ -91,6 +91,11 @@ def validate_against_schema(obj, schema):
                 want = spec.get("type")
                 if want and not isinstance(obj[key], _TYPE_MAP.get(want, object)):
                     errors.append(f"{key}: expected {want}, got {type(obj[key]).__name__}")
+        if schema.get("additionalProperties") is False and isinstance(obj, dict):
+            allowed = set(schema.get("properties") or {})
+            for key in obj:
+                if key not in allowed:
+                    errors.append(f"unexpected key: {key}")
     return errors
 
 

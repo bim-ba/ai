@@ -56,6 +56,11 @@ class TestValidate(unittest.TestCase):
     def test_non_object_root_fails(self):
         self.assertTrue(mm.validate_against_schema(["x"], mm.PROBE_SCHEMA))
 
+    def test_additional_property_fails(self):
+        obj = {"project": "ai", "skills": ["a"], "agent_targets": ["claude"], "extra": 1}
+        errs = mm.validate_against_schema(obj, mm.PROBE_SCHEMA)
+        self.assertTrue(any("extra" in e for e in errs))
+
 
 if __name__ == "__main__":
     unittest.main()

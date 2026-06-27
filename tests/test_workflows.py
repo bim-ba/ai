@@ -16,8 +16,10 @@ class TestAdvisorySmoke(unittest.TestCase):
 
     def test_has_both_jobs(self):
         txt = (WF / "advisory-smoke.yml").read_text(encoding="utf-8")
-        self.assertIn("model-matrix", txt)
-        self.assertIn("opencode", txt)
+        # Pin the job keys, not bare substrings ("opencode" also appears in the
+        # workflow name / install URL / prompt text).
+        self.assertIn("  model-matrix:", txt)
+        self.assertIn("  opencode:", txt)
 
     def test_matrix_job_runs_the_script(self):
         txt = (WF / "advisory-smoke.yml").read_text(encoding="utf-8")

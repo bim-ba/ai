@@ -3,6 +3,7 @@
 # dependencies = []
 # ///
 """Tests for the npm-pack tarball-contents check (skips cleanly where npm is absent)."""
+import os
 import shutil
 import subprocess
 import sys
@@ -14,6 +15,7 @@ CHECK = REPO / "packages" / "ai-opencode" / "scripts" / "check-pack.py"
 
 
 @unittest.skipIf(shutil.which("npm") is None, "npm not available")
+@unittest.skipIf(os.name == "nt", "npm.cmd subprocess is shell-dependent on Windows; covered by the ubuntu pack job")
 class CheckPack(unittest.TestCase):
     def test_pack_includes_synced_assets(self):
         r = subprocess.run(

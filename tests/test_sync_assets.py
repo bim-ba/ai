@@ -40,8 +40,8 @@ class SyncAssets(unittest.TestCase):
             pkg = Path(tmp)
             # behaviour-protocol.md copied verbatim
             self.assertTrue((pkg / "behaviour-protocol.md").is_file())
-            self.assertEqual((pkg / "behaviour-protocol.md").read_text(),
-                             PROTOCOL_SOURCE.read_text())
+            self.assertEqual((pkg / "behaviour-protocol.md").read_text(encoding="utf-8"),
+                             PROTOCOL_SOURCE.read_text(encoding="utf-8"))
             # every source skill landed as <skills>/<name>/SKILL.md
             copied = {p.name for p in (pkg / "skills").iterdir()
                       if (p / "SKILL.md").is_file()}
@@ -59,18 +59,18 @@ class SyncAssets(unittest.TestCase):
             self.assertEqual(first, second)
 
     def test_writes_only_inside_package_root(self):
-        proto_before = PROTOCOL_SOURCE.read_text()
+        proto_before = PROTOCOL_SOURCE.read_text(encoding="utf-8")
         skills_before = {
-            p: (p / "SKILL.md").read_text()
+            p: (p / "SKILL.md").read_text(encoding="utf-8")
             for d in SKILL_SOURCE_DIRS
             for p in d.iterdir()
             if (p / "SKILL.md").is_file()
         }
         with tempfile.TemporaryDirectory() as tmp:
             run_sync(tmp)
-        self.assertEqual(PROTOCOL_SOURCE.read_text(), proto_before)  # canonical protocol untouched
+        self.assertEqual(PROTOCOL_SOURCE.read_text(encoding="utf-8"), proto_before)  # canonical protocol untouched
         for p, content in skills_before.items():
-            self.assertEqual((p / "SKILL.md").read_text(), content)  # canonical skills untouched
+            self.assertEqual((p / "SKILL.md").read_text(encoding="utf-8"), content)  # canonical skills untouched
 
     def test_errors_clearly_on_wrong_repo_root(self):
         with tempfile.TemporaryDirectory() as tmp:

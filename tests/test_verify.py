@@ -44,7 +44,8 @@ class VerifyChecks(unittest.TestCase):
     def test_fails_when_only_spark_key_present(self):
         with tempfile.TemporaryDirectory() as tmp:
             seed(tmp, {
-                "extraKnownMarketplaces": {"spark": {}},
+                "extraKnownMarketplaces": {
+                    "spark": {"source": {"source": "github", "repo": "bim-ba/ai"}}},
                 "enabledPlugins": {"core@spark": True},
             })
             r = run_verify(tmp)

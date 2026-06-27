@@ -25,7 +25,7 @@ def run_bootstrap(project_root, with_plugins="core"):
 
 
 def load_settings(project_root):
-    return json.loads((Path(project_root) / ".claude" / "settings.json").read_text())
+    return json.loads((Path(project_root) / ".claude" / "settings.json").read_text(encoding="utf-8"))
 
 
 class BootstrapWiring(unittest.TestCase):
@@ -48,7 +48,7 @@ class BootstrapWiring(unittest.TestCase):
             (claude / "settings.json").write_text(json.dumps({
                 "enabledPlugins": {"core@spark": True},
                 "customKey": 123,
-            }))
+            }), encoding="utf-8")
             r = run_bootstrap(tmp, "core")
             self.assertEqual(r.returncode, 0, r.stderr)
             s = load_settings(tmp)
@@ -63,6 +63,38 @@ class BootstrapWiring(unittest.TestCase):
             run_bootstrap(tmp, "core,data")
             second = load_settings(tmp)
             self.assertEqual(first, second)
+
+    def test_agents_falls_back_to_copy_when_symlink_unavailable(self):
+        # Force symlink creation to fail (as on Windows without privilege) and assert
+        # bootstrap falls back to a regular-file AGENTS.md mirroring CLAUDE.md.
+        #
+        # We patch pathlib.Path.symlink_to (the exact call bootstrap makes) rather than
+        # os.symlink: on Python 3.9/3.10 pathlib binds os.symlink via an internal accessor
+        # captured at import, so patching os.symlink would not take effect. We run main()
+        # in-process so the patch is visible (a subprocess would not see it).
+        import contextlib
+        import importlib.util
+        import io
+        import unittest.mock as mock
+
+        spec = importlib.util.spec_from_file_location("bootstrap_fallback", BOOTSTRAP)
+        bootstrap_mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(bootstrap_mod)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            argv = ["bootstrap.py", "--project-root", tmp,
+                    "--plugin-root", str(PLUGIN_ROOT), "--with", "core"]
+            with mock.patch("pathlib.Path.symlink_to", side_effect=OSError("symlink not permitted")), \
+                    mock.patch.object(sys, "argv", argv), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                rc = bootstrap_mod.main()
+            self.assertEqual(rc, 0)
+            agents = Path(tmp) / "AGENTS.md"
+            claude = Path(tmp) / "CLAUDE.md"
+            self.assertTrue(agents.is_file())          # exists as a real file
+            self.assertFalse(agents.is_symlink())      # not a (broken) symlink
+            self.assertEqual(agents.read_text(encoding="utf-8"),
+                             claude.read_text(encoding="utf-8"))  # mirrors CLAUDE.md
 
 
 if __name__ == "__main__":

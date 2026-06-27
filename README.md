@@ -4,6 +4,7 @@
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-5A67D8)](https://docs.claude.com/en/docs/claude-code)
 [![powered by uv](https://img.shields.io/badge/powered%20by-uv-DE5FE9)](https://docs.astral.sh/uv/)
 [![GitHub last commit](https://img.shields.io/github/last-commit/bim-ba/ai)](https://github.com/bim-ba/ai/commits)
+[![CI](https://github.com/bim-ba/ai/actions/workflows/ci.yml/badge.svg)](https://github.com/bim-ba/ai/actions/workflows/ci.yml)
 
 A Claude Code plugin marketplace providing reusable agent behavior, project scaffolding, and data-engineering skills.
 
@@ -102,6 +103,12 @@ Then export the referenced environment variables. `.mcp.json` is git-ignored —
 - Work happens on feature branches.
 - New skills follow `plugins/core/templates/skills-authoring-standard.md`.
 - Specs and plans live in `docs/superpowers/`.
+
+## CI & release
+
+- **CI** (`.github/workflows/ci.yml`) runs on every push/PR to `main`: the `/setup` Python suite across `ubuntu`/`macos`/`windows` × Python 3.9–3.13, the opencode plugin's Bun tests, and an `npm pack` tarball-contents check. This is the merge gate.
+- **opencode smoke** (`.github/workflows/opencode-smoke.yml`) is advisory — manual (`workflow_dispatch`) + nightly. It runs a live opencode agent on a free OpenRouter model to confirm the shared skills are discoverable. Requires the `OPENROUTER_API_KEY` repo secret; skips cleanly without it. Never blocks a merge.
+- **Release** (`.github/workflows/release.yml`) publishes `@bim-ba/ai-opencode` to npm when a `v<version>` tag is pushed (the tag must match the package version). Requires the `NPM_TOKEN` repo secret.
 
 ## License
 

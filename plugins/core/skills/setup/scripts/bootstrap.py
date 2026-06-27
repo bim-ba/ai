@@ -83,8 +83,8 @@ def main():
     if claude_md.exists():
         actions.append(("SKIPPED", "CLAUDE.md"))
     else:
-        tmpl = (templates / "CLAUDE.md.tmpl").read_text()
-        claude_md.write_text(tmpl.replace("{{PROJECT_NAME}}", project_name(root)))
+        tmpl = (templates / "CLAUDE.md.tmpl").read_text(encoding="utf-8")
+        claude_md.write_text(tmpl.replace("{{PROJECT_NAME}}", project_name(root)), encoding="utf-8")
         actions.append(("CREATED", "CLAUDE.md"))
         agents = root / "AGENTS.md"
         if agents.is_symlink():
@@ -92,8 +92,14 @@ def main():
         elif agents.exists():
             actions.append(("WARN", "AGENTS.md is a real file — left as-is"))
         else:
-            agents.symlink_to("CLAUDE.md")
-            actions.append(("CREATED", "AGENTS.md -> CLAUDE.md"))
+            try:
+                agents.symlink_to("CLAUDE.md")
+                actions.append(("CREATED", "AGENTS.md -> CLAUDE.md"))
+            except OSError:
+                # Windows without privilege/Developer Mode can't create symlinks —
+                # fall back to a regular file mirroring CLAUDE.md (verify.py accepts a non-symlink AGENTS.md).
+                shutil.copyfile(claude_md, agents)
+                actions.append(("CREATED", "AGENTS.md (copy of CLAUDE.md — symlink unavailable)"))
 
     requested = [p.strip() for p in args.with_plugins.split(",") if p.strip()]
     plugin_names = []

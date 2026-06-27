@@ -23,7 +23,7 @@ def main():
     pkg = args.package_root.resolve()
     pkg.mkdir(parents=True, exist_ok=True)
 
-    shutil.copyfile(repo / PROTOCOL_SOURCE_REL, pkg / "behaviour-protocol.md")
+    shutil.copy2(repo / PROTOCOL_SOURCE_REL, pkg / "behaviour-protocol.md")
 
     skills_dst = pkg / "skills"
     if skills_dst.exists():

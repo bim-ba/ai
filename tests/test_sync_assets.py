@@ -59,11 +59,18 @@ class SyncAssets(unittest.TestCase):
             self.assertEqual(first, second)
 
     def test_writes_only_inside_package_root(self):
+        proto_before = PROTOCOL_SOURCE.read_text()
+        skills_before = {
+            p: (p / "SKILL.md").read_text()
+            for d in SKILL_SOURCE_DIRS
+            for p in d.iterdir()
+            if (p / "SKILL.md").is_file()
+        }
         with tempfile.TemporaryDirectory() as tmp:
-            sentinel_before = sorted(p.name for p in REPO.iterdir())
             run_sync(tmp)
-            sentinel_after = sorted(p.name for p in REPO.iterdir())
-            self.assertEqual(sentinel_before, sentinel_after)  # repo root untouched
+        self.assertEqual(PROTOCOL_SOURCE.read_text(), proto_before)  # canonical protocol untouched
+        for p, content in skills_before.items():
+            self.assertEqual((p / "SKILL.md").read_text(), content)  # canonical skills untouched
 
 
 if __name__ == "__main__":

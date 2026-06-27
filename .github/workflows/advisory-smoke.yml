@@ -6,18 +6,22 @@ on:
     - cron: '0 6 * * *'  # nightly 06:00 UTC
 
 jobs:
-  opencode:
-    name: live opencode skill discovery
+  skill-matrix:
+    name: opencode free-model skill-load matrix
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v8.2.0
+        with:
+          python-version: '3.12'
       - name: Guard — require OPENROUTER_API_KEY
         id: guard
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
           if [ -z "$OPENROUTER_API_KEY" ]; then
-            echo "OPENROUTER_API_KEY not set — skipping live smoke." >> "$GITHUB_STEP_SUMMARY"
+            echo "OPENROUTER_API_KEY not set — skipping skill-load matrix." >> "$GITHUB_STEP_SUMMARY"
             echo "run=false" >> "$GITHUB_OUTPUT"
           else
             echo "run=true" >> "$GITHUB_OUTPUT"
@@ -27,31 +31,9 @@ jobs:
         run: |
           curl -fsSL https://opencode.ai/install | bash
           echo "$HOME/.opencode/bin" >> "$GITHUB_PATH"
-      - name: Run a live skill-discovery prompt
+      - name: Run the skill-load matrix across popular free models
         if: steps.guard.outputs.run == 'true'
-        continue-on-error: true
-        timeout-minutes: 10
+        timeout-minutes: 25
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-        run: |
-          out=$(opencode run --model openrouter/openrouter/free \
-            "List the skill names available to you in this project. Reply with the bare names only.")
-          echo "$out"
-          echo "$out" | grep -qi "setup" \
-            && echo "smoke: agent discovered the 'setup' skill ✓" \
-            || echo "smoke: 'setup' skill not found (advisory — free-tier models drift)"
-
-  model-matrix:
-    name: free-model JSON-schema matrix
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v8.2.0
-        with:
-          python-version: '3.12'
-      - name: Probe free structured-output models
-        timeout-minutes: 10
-        env:
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-        run: uv run --no-project scripts/model-matrix-check.py >> "$GITHUB_STEP_SUMMARY"
+        run: uv run --no-project scripts/model-matrix-check.py | tee -a "$GITHUB_STEP_SUMMARY"

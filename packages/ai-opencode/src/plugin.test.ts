@@ -3,6 +3,7 @@ import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { applyConfig } from "./plugin"
+import { AiOpencode, DRIFT_LOG_REMINDER } from "./plugin"
 
 let dir: string
 let protocol: string
@@ -45,4 +46,24 @@ test("applyConfig no-ops for paths that do not exist", () => {
   applyConfig(cfg, { protocol: join(dir, "missing.md"), skillsDir: join(dir, "missing") })
   expect(cfg.instructions).toBeUndefined()
   expect(cfg.skills).toBeUndefined()
+})
+
+test("DRIFT_LOG_REMINDER mentions the creating-drift-logs skill and the 'none' acknowledgement", () => {
+  expect(DRIFT_LOG_REMINDER).toContain("creating-drift-logs")
+  expect(DRIFT_LOG_REMINDER).toContain("drift-log delta: none")
+})
+
+test("event hook logs the reminder on session.idle and nothing otherwise", async () => {
+  const hooks = await AiOpencode({} as any)
+  const logged: string[] = []
+  const orig = console.log
+  console.log = (...a: any[]) => { logged.push(a.join(" ")) }
+  try {
+    await hooks.event!({ event: { type: "session.updated" } } as any)
+    expect(logged).toEqual([])
+    await hooks.event!({ event: { type: "session.idle" } } as any)
+    expect(logged).toEqual([DRIFT_LOG_REMINDER])
+  } finally {
+    console.log = orig
+  }
 })

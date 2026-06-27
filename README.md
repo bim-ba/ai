@@ -1,12 +1,20 @@
+<p align="center">
+  <img src=".github/assets/social-preview.png" alt="ai — Claude Code &amp; opencode plugin marketplace" width="100%">
+</p>
+
 # ai
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-5A67D8)](https://docs.claude.com/en/docs/claude-code)
-[![powered by uv](https://img.shields.io/badge/powered%20by-uv-DE5FE9)](https://docs.astral.sh/uv/)
-[![GitHub last commit](https://img.shields.io/github/last-commit/bim-ba/ai)](https://github.com/bim-ba/ai/commits)
+[![npm](https://img.shields.io/npm/v/@bim-ba/ai-opencode?color=5A67D8&label=opencode%20plugin)](https://www.npmjs.com/package/@bim-ba/ai-opencode)
+[![provenance](https://img.shields.io/badge/npm-provenance-5A67D8?logo=npm)](https://www.npmjs.com/package/@bim-ba/ai-opencode#provenance)
 [![CI](https://github.com/bim-ba/ai/actions/workflows/ci.yml/badge.svg)](https://github.com/bim-ba/ai/actions/workflows/ci.yml)
 
-A Claude Code plugin marketplace providing reusable agent behavior, project scaffolding, and data-engineering skills.
+A Claude Code **and** opencode plugin marketplace providing reusable agent behavior, project scaffolding, and data-engineering skills.
+
+<p align="center">
+  <img src=".github/assets/demo.gif" alt="ai /setup scaffolding demo" width="100%">
+</p>
 
 ## Requirements
 

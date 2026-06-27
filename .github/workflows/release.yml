@@ -1,0 +1,43 @@
+name: release @bim-ba/ai-opencode
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  publish:
+    name: npm publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v8
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+      - name: Guard — require NPM_TOKEN
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "NPM_TOKEN not set — cannot publish." >&2
+            exit 1
+          fi
+      - name: Assert package version matches the tag
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          ver=$(uv run --no-project python -c "import json; print(json.load(open('packages/ai-opencode/package.json'))['version'])")
+          if [ "$tag" != "$ver" ]; then
+            echo "tag v$tag != package.json version $ver" >&2
+            exit 1
+          fi
+          echo "version $ver matches tag"
+      - name: Sync canonical assets into the package
+        run: uv run --no-project packages/ai-opencode/scripts/sync-assets.py --repo-root . --package-root packages/ai-opencode
+      - name: Publish
+        run: npm publish --access public
+        working-directory: packages/ai-opencode
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -24,5 +24,24 @@ class TestAdvisorySmoke(unittest.TestCase):
         self.assertIn("scripts/model-matrix-check.py", txt)
 
 
+class TestReleaseWorkflow(unittest.TestCase):
+    def setUp(self):
+        self.txt = (WF / "release.yml").read_text(encoding="utf-8")
+
+    def test_uses_oidc(self):
+        self.assertIn("id-token: write", self.txt)
+
+    def test_scoped_to_release_environment(self):
+        self.assertIn("environment: release", self.txt)
+
+    def test_publishes_with_provenance(self):
+        self.assertIn("--provenance", self.txt)
+
+    def test_no_long_lived_token(self):
+        self.assertNotIn("NPM_TOKEN", self.txt)
+        self.assertNotIn("NPM_ACCESS_TOKEN", self.txt)
+        self.assertNotIn("NODE_AUTH_TOKEN", self.txt)
+
+
 if __name__ == "__main__":
     unittest.main()

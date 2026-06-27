@@ -4,10 +4,15 @@ on:
   push:
     tags: ['v*']
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   publish:
-    name: npm publish
+    name: npm publish (OIDC)
     runs-on: ubuntu-latest
+    environment: release
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v8.2.0
@@ -15,16 +20,10 @@ jobs:
           python-version: '3.12'
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           registry-url: 'https://registry.npmjs.org'
-      - name: Guard — require NPM_TOKEN
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          if [ -z "$NODE_AUTH_TOKEN" ]; then
-            echo "NPM_TOKEN not set — cannot publish." >&2
-            exit 1
-          fi
+      - name: Upgrade npm (OIDC trusted publishing needs >= 11.5.1)
+        run: npm install -g npm@latest
       - name: Assert package version matches the tag
         run: |
           tag="${GITHUB_REF_NAME#v}"
@@ -36,8 +35,6 @@ jobs:
           echo "version $ver matches tag"
       - name: Sync canonical assets into the package
         run: uv run --no-project packages/ai-opencode/scripts/sync-assets.py --repo-root . --package-root packages/ai-opencode
-      - name: Publish
-        run: npm publish --access public
+      - name: Publish with provenance
+        run: npm publish --provenance --access public
         working-directory: packages/ai-opencode
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

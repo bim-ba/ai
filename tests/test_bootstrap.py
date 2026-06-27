@@ -16,12 +16,56 @@ PLUGIN_ROOT = REPO / "plugins" / "core"
 
 
 def run_bootstrap(project_root, with_plugins="core"):
-    return subprocess.run(
-        [sys.executable, str(BOOTSTRAP),
-         "--project-root", str(project_root),
-         "--plugin-root", str(PLUGIN_ROOT),
-         "--with", with_plugins],
-        capture_output=True, text=True)
+    # Try to detect if mocking is active (for the symlink unavailability test).
+    # If os.symlink is mocked, run bootstrap in-process so the mock is effective.
+    import os
+    import importlib.util
+    import io
+
+    if hasattr(os.symlink, "_mock_name"):
+        # os.symlink is mocked; run bootstrap in-process
+        spec = importlib.util.spec_from_file_location("bootstrap", BOOTSTRAP)
+        bootstrap_module = importlib.util.module_from_spec(spec)
+
+        # Capture stdout/stderr
+        old_argv = sys.argv
+        old_stdout = sys.stdout
+        old_stderr = sys.stderr
+
+        try:
+            sys.argv = [
+                "bootstrap.py",
+                "--project-root", str(project_root),
+                "--plugin-root", str(PLUGIN_ROOT),
+                "--with", with_plugins
+            ]
+            sys.stdout = io.StringIO()
+            sys.stderr = io.StringIO()
+            spec.loader.exec_module(bootstrap_module)
+            returncode = bootstrap_module.main()
+            stdout = sys.stdout.getvalue()
+            stderr = sys.stderr.getvalue()
+        finally:
+            sys.argv = old_argv
+            sys.stdout = old_stdout
+            sys.stderr = old_stderr
+
+        # Return a result object that mimics subprocess.CompletedProcess
+        class Result:
+            pass
+        r = Result()
+        r.returncode = returncode
+        r.stdout = stdout
+        r.stderr = stderr
+        return r
+    else:
+        # Normal subprocess execution
+        return subprocess.run(
+            [sys.executable, str(BOOTSTRAP),
+             "--project-root", str(project_root),
+             "--plugin-root", str(PLUGIN_ROOT),
+             "--with", with_plugins],
+            capture_output=True, text=True)
 
 
 def load_settings(project_root):
@@ -63,6 +107,20 @@ class BootstrapWiring(unittest.TestCase):
             run_bootstrap(tmp, "core,data")
             second = load_settings(tmp)
             self.assertEqual(first, second)
+
+    def test_agents_falls_back_to_copy_when_symlink_unavailable(self):
+        import os
+        import unittest.mock as mock
+        with tempfile.TemporaryDirectory() as tmp:
+            # Simulate a platform where symlink creation is not permitted (e.g. Windows).
+            with mock.patch.object(os, "symlink", side_effect=OSError("symlink not permitted")):
+                r = run_bootstrap(tmp, "core")
+            self.assertEqual(r.returncode, 0, r.stderr)
+            agents = Path(tmp) / "AGENTS.md"
+            claude = Path(tmp) / "CLAUDE.md"
+            self.assertTrue(agents.is_file())          # exists as a real file
+            self.assertFalse(agents.is_symlink())      # not a (broken) symlink
+            self.assertEqual(agents.read_text(), claude.read_text())  # mirrors CLAUDE.md
 
 
 if __name__ == "__main__":

@@ -92,8 +92,14 @@ def main():
         elif agents.exists():
             actions.append(("WARN", "AGENTS.md is a real file — left as-is"))
         else:
-            agents.symlink_to("CLAUDE.md")
-            actions.append(("CREATED", "AGENTS.md -> CLAUDE.md"))
+            try:
+                agents.symlink_to("CLAUDE.md")
+                actions.append(("CREATED", "AGENTS.md -> CLAUDE.md"))
+            except OSError:
+                # Windows without privilege/Developer Mode can't create symlinks —
+                # fall back to a regular file mirroring CLAUDE.md (verify.py accepts a non-symlink AGENTS.md).
+                shutil.copyfile(claude_md, agents)
+                actions.append(("CREATED", "AGENTS.md (copy of CLAUDE.md — symlink unavailable)"))
 
     requested = [p.strip() for p in args.with_plugins.split(",") if p.strip()]
     plugin_names = []

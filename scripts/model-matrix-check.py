@@ -2,59 +2,61 @@
 # requires-python = ">=3.9"
 # dependencies = []
 # ///
-"""Advisory free-model JSON-schema matrix probe.
+"""Advisory opencode-backed skill-load matrix.
 
-NOTE: This primarily exercises OpenRouter and the selected models' structured-output
-capability, not this repo's own logic. It is a cross-model capability/health smoke
-aligned with the project's cross-agent ethos — advisory signal only, never a gate.
+For each of the top free models (by OpenRouter weekly popularity) this runs
+`opencode run --model <model>` so the model *genuinely loads* this repo's skills
+through opencode, then asks the agent to list its loaded skills and validates that
+every skill this repo ships is present (opencode built-ins like `customize-opencode`
+are allowed extras).
 
-Self-healing: the free-model list is fetched live from OpenRouter and filtered, so it
-cannot rot to a delisted model id (the failure mode that left a dead model in the old
-smoke). Pure functions (select/validate) are unit-tested offline in tests/.
+Why opencode rather than a raw API call: a raw chat model has no access to the repo,
+so it cannot truly "load" anything. Running through opencode is the faithful test of
+what a model actually picks up when it backs the agent. (MCP servers and hooks are
+intentionally not checked — the plugin doesn't load MCP in CI, and hooks are runtime
+callbacks the model never sees.)
+
+Pure functions (ground truth, model selection, ANSI strip, JSON-array extraction,
+validation, summary formatting) are unit-tested offline; the opencode subprocess
+calls are not.
 """
 import json
 import os
+import re
+import subprocess
 import sys
 import urllib.error
 import urllib.request
+from pathlib import Path
 
-OPENROUTER_BASE = "https://openrouter.ai/api/v1"
-
-# A JSON-Schema subset used BOTH as the API response_format and for local validation.
-PROBE_SCHEMA = {
-    "type": "object",
-    "required": ["project", "skills", "agent_targets"],
-    "properties": {
-        "project": {"type": "string"},
-        "skills": {"type": "array"},
-        "agent_targets": {"type": "array"},
-    },
-    "additionalProperties": False,
-}
-
-PROBE_PROMPT = (
-    "Reply ONLY with JSON matching the schema. "
-    "project: the string 'ai'. "
-    "skills: a list of 2-3 example skill names. "
-    "agent_targets: the list of AI agents this project targets."
+OPENROUTER_MODELS_URL = "https://openrouter.ai/api/v1/models?order=top-weekly"
+DEFAULT_N = 4
+PROMPT = (
+    "List the names of the skills available to you in this project. "
+    'Reply with ONLY a JSON array of the bare skill names, e.g. ["alpha","beta"]. '
+    "No prose, no code fences."
 )
-
-_TYPE_MAP = {
-    "object": dict,
-    "string": str,
-    "array": list,
-    "number": (int, float),
-    "integer": int,
-    "boolean": bool,
-}
+_ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
 
 
-def select_free_structured_models(payload, n=4):
-    """Return up to n model ids that are currently free and support structured outputs.
+def repo_skill_names(repo_root):
+    """Ground truth: the set of skill directory names this repo ships.
 
-    free := pricing.prompt == 0 and pricing.completion == 0
-    structured := 'structured_outputs' in supported_parameters
-    Deterministic: sorted by id.
+    A skill is any directory under plugins/*/skills/ that contains a SKILL.md.
+    """
+    root = Path(repo_root)
+    names = set()
+    for skill_md in root.glob("plugins/*/skills/*/SKILL.md"):
+        names.add(skill_md.parent.name)
+    return names
+
+
+def select_popular_free_models(payload, n=DEFAULT_N):
+    """Return up to n free model ids, preserving the payload's order.
+
+    The payload is expected to be the `?order=top-weekly` response, already sorted
+    server-side by popularity, so we only filter (free = prompt and completion both
+    priced at 0) and keep the incoming order.
     """
     out = []
     for m in payload.get("data", []):
@@ -64,97 +66,152 @@ def select_free_structured_models(payload, n=4):
                     and float(pricing.get("completion", 1)) == 0.0)
         except (TypeError, ValueError):
             free = False
-        sp = m.get("supported_parameters") or []
-        if free and "structured_outputs" in sp and m.get("id"):
+        if free and m.get("id"):
             out.append(m["id"])
-    out.sort()
     return out[:n]
 
 
-def validate_against_schema(obj, schema):
-    """Minimal JSON-Schema-subset validator. Returns a list of error strings ([] == valid).
+def strip_ansi(text):
+    """Remove ANSI escape sequences (opencode colorizes its output)."""
+    return _ANSI.sub("", text)
 
-    Supports top-level type, required keys, and per-property primitive types
-    (object/string/array/number/integer/boolean). No nested validation beyond type.
+
+def extract_json_array(text):
+    """Pull the first JSON array of strings out of arbitrary agent output.
+
+    Tolerates surrounding prose, code fences, and trailing reminder lines. Returns
+    a list of strings, or None if no parseable array is found.
     """
-    errors = []
-    top = schema.get("type")
-    if top and not isinstance(obj, _TYPE_MAP.get(top, object)):
-        errors.append(f"root: expected {top}, got {type(obj).__name__}")
-        return errors
-    if top == "object":
-        for key in schema.get("required", []):
-            if key not in obj:
-                errors.append(f"missing required key: {key}")
-        for key, spec in (schema.get("properties") or {}).items():
-            if key in obj:
-                want = spec.get("type")
-                if want and not isinstance(obj[key], _TYPE_MAP.get(want, object)):
-                    errors.append(f"{key}: expected {want}, got {type(obj[key]).__name__}")
-        if schema.get("additionalProperties") is False and isinstance(obj, dict):
-            allowed = set(schema.get("properties") or {})
-            for key in obj:
-                if key not in allowed:
-                    errors.append(f"unexpected key: {key}")
-    return errors
+    t = strip_ansi(text).strip()
+    try:
+        v = json.loads(t)
+        if isinstance(v, list):
+            return [str(x) for x in v]
+    except (ValueError, TypeError):
+        pass
+    start = t.find("[")
+    while start != -1:
+        depth = 0
+        for i in range(start, len(t)):
+            if t[i] == "[":
+                depth += 1
+            elif t[i] == "]":
+                depth -= 1
+                if depth == 0:
+                    try:
+                        v = json.loads(t[start:i + 1])
+                        if isinstance(v, list):
+                            return [str(x) for x in v]
+                    except (ValueError, TypeError):
+                        pass
+                    break
+        start = t.find("[", start + 1)
+    return None
 
 
-def _http_json(url, api_key=None, data=None, timeout=60):
-    headers = {"Content-Type": "application/json"}
-    if api_key:
-        headers["Authorization"] = f"Bearer {api_key}"
-    body = json.dumps(data).encode() if data is not None else None
-    req = urllib.request.Request(
-        url, data=body, headers=headers, method="POST" if data is not None else "GET")
+def validate_skills(reported, ground_truth):
+    """Validate reported skill names against the repo ground truth.
+
+    Pass iff every ground-truth skill is present (extras are allowed and reported
+    separately). `reported` may be None when the agent produced no parseable array.
+    """
+    reported_set = set(reported or [])
+    missing = sorted(ground_truth - reported_set)
+    extra = sorted(reported_set - ground_truth)
+    return {"ok": not missing and reported is not None, "missing": missing, "extra": extra}
+
+
+def format_model_section(model_id, result, raw_output):
+    """Render one model's detailed result as a Markdown block."""
+    mark = "✅" if result["ok"] else "❌"
+    lines = [f"### {mark} `{model_id}`", ""]
+    if result["missing"]:
+        lines.append(f"**Missing repo skills:** {', '.join(result['missing'])}")
+    else:
+        lines.append("All repo skills present.")
+    if result["extra"]:
+        lines.append(f"**Extra (built-ins / unexpected):** {', '.join(result['extra'])}")
+    lines += [
+        "",
+        "<details><summary>parsed skills</summary>",
+        "",
+        "```json",
+        json.dumps(result.get("reported"), indent=2, ensure_ascii=False),
+        "```",
+        "",
+        "</details>",
+        "",
+        "<details><summary>raw agent output</summary>",
+        "",
+        "```",
+        strip_ansi(raw_output).strip() or "(empty)",
+        "```",
+        "",
+        "</details>",
+        "",
+    ]
+    return "\n".join(lines)
+
+
+def run_opencode(model_id, prompt=PROMPT, timeout=180):
+    """Run a model through opencode in this repo; return (returncode, combined output)."""
+    proc = subprocess.run(
+        ["opencode", "run", "--model", f"openrouter/{model_id}", prompt],
+        capture_output=True, text=True, timeout=timeout,
+    )
+    return proc.returncode, (proc.stdout or "") + (proc.stderr or "")
+
+
+def _http_json(url, timeout=30):
+    req = urllib.request.Request(url, headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         return json.loads(resp.read().decode())
 
 
-def probe_model(model_id, api_key, prompt=PROBE_PROMPT, schema=PROBE_SCHEMA):
-    """Call one model with a strict json_schema response_format; return (ok, detail)."""
-    payload = {
-        "model": model_id,
-        "messages": [{"role": "user", "content": prompt}],
-        "response_format": {
-            "type": "json_schema",
-            "json_schema": {"name": "probe", "strict": True, "schema": schema},
-        },
-    }
-    try:
-        resp = _http_json(f"{OPENROUTER_BASE}/chat/completions",
-                          api_key=api_key, data=payload, timeout=60)
-    except (urllib.error.URLError, TimeoutError) as e:
-        return False, f"request failed: {e}"
-    try:
-        content = resp["choices"][0]["message"]["content"]
-        obj = json.loads(content)
-    except (KeyError, IndexError, ValueError, TypeError) as e:
-        return False, f"unparseable response: {e}"
-    errs = validate_against_schema(obj, schema)
-    return (not errs), ("; ".join(errs) if errs else "valid")
-
-
 def main():
-    api_key = os.environ.get("OPENROUTER_API_KEY")
-    if not api_key:
-        print("OPENROUTER_API_KEY not set — skipping model matrix (advisory).")
+    if not os.environ.get("OPENROUTER_API_KEY"):
+        print("OPENROUTER_API_KEY not set — skipping skill-load matrix (advisory).")
         return 0
+    repo_root = Path(__file__).resolve().parents[1]
+    ground_truth = repo_skill_names(repo_root)
+    if not ground_truth:
+        print("could not resolve repo skills — advisory skip.", file=sys.stderr)
+        return 1
     try:
-        models = _http_json(f"{OPENROUTER_BASE}/models", timeout=30)
+        payload = _http_json(OPENROUTER_MODELS_URL)
     except (urllib.error.URLError, TimeoutError) as e:
         print(f"could not fetch model list: {e}", file=sys.stderr)
-        return 1  # total/internal failure; job is continue-on-error regardless
-    selected = select_free_structured_models(models, n=4)
-    if not selected:
-        print("no free structured-output models currently available — advisory skip.")
+        return 1
+    models = select_popular_free_models(payload)
+    if not models:
+        print("no free models currently available — advisory skip.")
         return 0
-    print(f"Probing {len(selected)} free structured-output models:\n")
-    print("| model | result |")
-    print("|-------|--------|")
-    for mid in selected:
-        ok, detail = probe_model(mid, api_key)
-        print(f"| `{mid}` | {'✓' if ok else '✗'} {detail} |")
-    return 0  # advisory: per-model failures never fail the build
+
+    print(f"# opencode skill-load matrix\n")
+    print(f"Ground truth — {len(ground_truth)} repo skills: "
+          f"{', '.join(sorted(ground_truth))}\n")
+    print(f"Probing {len(models)} free models (OpenRouter weekly-popularity order):\n")
+
+    rows, sections = [], []
+    for model_id in models:
+        try:
+            _, raw = run_opencode(model_id)
+        except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+            raw = f"opencode run failed: {e}"
+        reported = extract_json_array(raw)
+        result = validate_skills(reported, ground_truth)
+        result["reported"] = reported
+        mark = "✅" if result["ok"] else "❌"
+        miss = "—" if not result["missing"] else f"{len(result['missing'])} missing"
+        rows.append(f"| `{model_id}` | {mark} | {miss} |")
+        sections.append(format_model_section(model_id, result, raw))
+
+    print("| model | skills loaded | gaps |")
+    print("|-------|---------------|------|")
+    print("\n".join(rows))
+    print("\n---\n")
+    print("\n".join(sections))
+    return 0  # advisory: per-model results never fail the build
 
 
 if __name__ == "__main__":

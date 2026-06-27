@@ -14,16 +14,22 @@ class TestAdvisorySmoke(unittest.TestCase):
         txt = (WF / "advisory-smoke.yml").read_text(encoding="utf-8")
         self.assertNotIn("deepseek-r1", txt)
 
-    def test_has_both_jobs(self):
+    def test_single_skill_matrix_job(self):
         txt = (WF / "advisory-smoke.yml").read_text(encoding="utf-8")
-        # Pin the job keys, not bare substrings ("opencode" also appears in the
-        # workflow name / install URL / prompt text).
-        self.assertIn("  model-matrix:", txt)
-        self.assertIn("  opencode:", txt)
+        # Consolidated to one opencode-backed job (pin the job key, not a substring).
+        self.assertIn("  skill-matrix:", txt)
+        self.assertNotIn("  model-matrix:", txt)
+        self.assertNotIn("  opencode:", txt)
 
-    def test_matrix_job_runs_the_script(self):
+    def test_matrix_job_runs_the_script_and_tees_summary(self):
         txt = (WF / "advisory-smoke.yml").read_text(encoding="utf-8")
         self.assertIn("scripts/model-matrix-check.py", txt)
+        # tee so the table shows in both the log and the step summary
+        self.assertIn('tee -a "$GITHUB_STEP_SUMMARY"', txt)
+
+    def test_installs_opencode(self):
+        txt = (WF / "advisory-smoke.yml").read_text(encoding="utf-8")
+        self.assertIn("opencode.ai/install", txt)
 
 
 class TestReleaseWorkflow(unittest.TestCase):

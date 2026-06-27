@@ -107,8 +107,8 @@ Then export the referenced environment variables. `.mcp.json` is git-ignored —
 ## CI & release
 
 - **CI** (`.github/workflows/ci.yml`) runs on every push/PR to `main`: the `/setup` Python suite across `ubuntu`/`macos`/`windows` × Python 3.9–3.13, the opencode plugin's Bun tests, and an `npm pack` tarball-contents check. This is the merge gate.
-- **opencode smoke** (`.github/workflows/opencode-smoke.yml`) is advisory — manual (`workflow_dispatch`) + nightly. It runs a live opencode agent on a free OpenRouter model to confirm the shared skills are discoverable. Requires the `OPENROUTER_API_KEY` repo secret; skips cleanly without it. Never blocks a merge.
-- **Release** (`.github/workflows/release.yml`) publishes `@bim-ba/ai-opencode` to npm when a `v<version>` tag is pushed (the tag must match the package version). Requires the `NPM_TOKEN` repo secret.
+- **Advisory smoke** (`.github/workflows/advisory-smoke.yml`) is advisory — manual (`workflow_dispatch`) + nightly. The `opencode` job runs a live opencode agent on OpenRouter's curated free model to confirm the shared skills are discoverable; the `model-matrix` job self-heals the current free structured-output models from OpenRouter and validates a JSON-Schema response from each. Requires the `OPENROUTER_API_KEY` repo secret; skips cleanly without it. Never blocks a merge.
+- **Release** (`.github/workflows/release.yml`) publishes `@bim-ba/ai-opencode` to npm with provenance when a `v<version>` tag is pushed (the tag must match the package version). Auth is **OIDC trusted publishing** — no long-lived token. One-time setup: (1) publish `0.1.0` once manually (`cd packages/ai-opencode && npm login && npm publish --access public`) so the package exists; (2) on npmjs.com → package → Settings → Trusted publishing, add provider GitHub Actions, repo `bim-ba/ai`, workflow `release.yml`, environment `release`; (3) delete any `NPM_ACCESS_TOKEN`/`NPM_TOKEN` secret. After that, every `v*` tag publishes hands-free.
 
 ## License
 

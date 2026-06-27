@@ -1,4 +1,4 @@
-name: opencode smoke (advisory)
+name: advisory smoke
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
     - cron: '0 6 * * *'  # nightly 06:00 UTC
 
 jobs:
-  smoke:
+  opencode:
     name: live opencode skill discovery
     runs-on: ubuntu-latest
     steps:
@@ -34,9 +34,24 @@ jobs:
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
-          out=$(opencode run --model openrouter/deepseek/deepseek-r1:free \
+          out=$(opencode run --model openrouter/openrouter/free \
             "List the skill names available to you in this project. Reply with the bare names only.")
           echo "$out"
           echo "$out" | grep -qi "setup" \
             && echo "smoke: agent discovered the 'setup' skill ✓" \
-            || echo "smoke: 'setup' skill not found in agent output (advisory — free-tier models drift)"
+            || echo "smoke: 'setup' skill not found (advisory — free-tier models drift)"
+
+  model-matrix:
+    name: free-model JSON-schema matrix
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v8.2.0
+        with:
+          python-version: '3.12'
+      - name: Probe free structured-output models
+        timeout-minutes: 10
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: uv run --no-project scripts/model-matrix-check.py >> "$GITHUB_STEP_SUMMARY"

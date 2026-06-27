@@ -83,8 +83,8 @@ def main():
     if claude_md.exists():
         actions.append(("SKIPPED", "CLAUDE.md"))
     else:
-        tmpl = (templates / "CLAUDE.md.tmpl").read_text()
-        claude_md.write_text(tmpl.replace("{{PROJECT_NAME}}", project_name(root)))
+        tmpl = (templates / "CLAUDE.md.tmpl").read_text(encoding="utf-8")
+        claude_md.write_text(tmpl.replace("{{PROJECT_NAME}}", project_name(root)), encoding="utf-8")
         actions.append(("CREATED", "CLAUDE.md"))
         agents = root / "AGENTS.md"
         if agents.is_symlink():

@@ -30,6 +30,7 @@ jobs:
       - name: Run a live skill-discovery prompt
         if: steps.guard.outputs.run == 'true'
         continue-on-error: true
+        timeout-minutes: 10
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |

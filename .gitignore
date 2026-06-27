@@ -11,3 +11,7 @@ PROMPT.md
 packages/ai-opencode/skills/
 packages/ai-opencode/behaviour-protocol.md
 packages/ai-opencode/node_modules/
+
+# Python bytecode caches (from running the test suite)
+__pycache__/
+*.pyc

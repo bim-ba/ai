@@ -14,7 +14,6 @@ JSON_FILES = [
     "plugins/core/.claude-plugin/plugin.json",
     "plugins/data/.claude-plugin/plugin.json",
     "plugins/core/hooks/hooks.json",
-    "plugins/core/templates/claudelintrc.json",
     "opencode.json",
     "packages/ai-opencode/package.json",
 ]

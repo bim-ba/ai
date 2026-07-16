@@ -75,8 +75,6 @@ def main():
 
     mkdir(".claude/drift-log/open")
     mkdir(".claude/drift-log/applied")
-    copy("claudelintrc.json", ".claudelintrc.json")
-    copy("claudelintignore", ".claudelintignore")
     copy("skills-authoring-standard.md", ".claude/skills/README.md")
 
     claude_md = root / "CLAUDE.md"
@@ -107,10 +105,6 @@ def main():
         if name not in plugin_names:
             plugin_names.append(name)
     merge_settings(root, plugin_names, actions)
-
-    if shutil.which("claudelint") is None:
-        print("note: claudelint not found — install it to lint your agent surface "
-              "(config written anyway).")
 
     print("/setup complete")
     print("=" * 51)

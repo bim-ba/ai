@@ -8,7 +8,6 @@ Do not open a public issue for security reports.
 
 ## Scope
 
-This repo ships installable agent instructions, skills, and the `@bim-ba/ai-opencode`
-npm package. Relevant concerns include malicious skill content, supply-chain issues in
-the published package, and unsafe commands in scripts. We aim to acknowledge reports
-within a few days.
+This repo ships installable agent instructions, skills, and project scaffolding.
+Relevant concerns include malicious skill content and unsafe commands in scripts.
+We aim to acknowledge reports within a few days.

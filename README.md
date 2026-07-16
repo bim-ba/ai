@@ -59,7 +59,7 @@ The plugin self-wires: it injects the shared behaviour protocol as `instructions
 
 | Skill | Domain | What it does | Triggers |
 |-------|--------|--------------|----------|
-| `setup` | core | Bootstraps a project with ai conventions (drift-log dirs, claudelint config, a thin CLAUDE.md + AGENTS.md, plugin wiring). Idempotent. | Manual: `/setup` |
+| `setup` | core | Bootstraps a project with ai conventions (drift-log dirs, a thin CLAUDE.md + AGENTS.md, plugin wiring). Idempotent. | Manual: `/setup` |
 | `creating-drift-logs` | core | Captures a divergence between actual behavior and codified instructions as an immutable drift-log entry, so good conventions can be promoted later. | Auto (8 drift triggers); nudged by the Stop hook |
 | `reviewing-drift-logs` | core | Triages the drift-log — promotes open→applied, checks staleness, compacts entries, codifies insights into rules. | Manual |
 | `reviewing-agent-instructions` | core | Audits the agent-instruction surface (CLAUDE.md, skills, drift-log, hooks) for pollution, duplication, dead refs, and contradictions. Report-only, no auto-fix. | Manual |
@@ -85,7 +85,7 @@ In any project:
 /setup --with data       # same as above — core is always enabled
 ```
 
-`/setup` creates the drift-log directories, claudelint config, a skills-authoring standard, a thin `CLAUDE.md` (+ `AGENTS.md` symlink), and wires the `ai` marketplace into `.claude/settings.json`. It is idempotent — safe to re-run.
+`/setup` creates the drift-log directories, a skills-authoring standard, a thin `CLAUDE.md` (+ `AGENTS.md` symlink), and wires the `ai` marketplace into `.claude/settings.json`. It is idempotent — safe to re-run.
 
 ## MCP configuration
 

@@ -1,13 +1,13 @@
 ---
 name: setup
-description: "Use when bootstrapping a new (or existing) project to reuse the shared ai conventions — scaffolds drift-log, claudelint config, a thin CLAUDE.md, and wires the requested ai plugins (`core` always) into `.claude/settings.json`. Idempotent."
+description: "Use when bootstrapping a new (or existing) project to reuse the shared ai conventions — scaffolds drift-log, a thin CLAUDE.md, and wires the requested ai plugins (`core` always) into `.claude/settings.json`. Idempotent."
 type: skill
 category: workflow
 ---
 
 # /setup — Project Bootstrap Skill
 
-Scaffolds a target project with the ai conventions: drift-log, claudelint config, skills authoring standard, a thin CLAUDE.md, and the required `.claude/settings.json` plugin wiring. Safe to re-run — only creates what is missing.
+Scaffolds a target project with the ai conventions: drift-log, skills authoring standard, a thin CLAUDE.md, and the required `.claude/settings.json` plugin wiring. Safe to re-run — only creates what is missing.
 
 ## Purpose
 
@@ -94,7 +94,7 @@ Relay the `bootstrap.py` summary table to the user, then print next steps:
 
 ```
 Next steps:
-  1. git add .claude/ CLAUDE.md AGENTS.md .claudelintrc.json .claudelintignore
+  1. git add .claude/ CLAUDE.md AGENTS.md
   2. git commit -m "chore: bootstrap ai scaffold"
   3. Edit CLAUDE.md — fill in Project Overview and project-specific conventions.
 ```
@@ -113,8 +113,7 @@ Post-checks are performed by `verify.py` in Workflow Step 3 (drift-log dirs, set
 - **Never write drift-log entry files** (`open/*.md`, `applied/*.md`). This skill only creates the `open/` and `applied/` directories (`mkdir -p`); it never writes individual entries. The drift-log is an immutable historical record — entry creation is out of scope for `/setup`.
 - **Merge settings.json — never replace it.** The file may contain permissions, hooks, MCP server config, and other keys that are invisible to this skill but critical to the project. A full replace will silently delete them. Merge only the marketplace + enabledPlugins keys (handled by `bootstrap.py` in Workflow Step 2).
 - **`AGENTS.md` symlink: check before creating.** If `AGENTS.md` already exists as a file (not a symlink), do not replace it — warn the user.
-- **claudelint binary absence is not an error.** Print the install reminder and continue — the config is still useful for when the binary is later installed.
-- **Do not install claudelint or any binary.** `/setup` is a scaffolding skill only. Binary installation is out of scope.
+- **Do not install any binary.** `/setup` is a scaffolding skill only. Binary installation is out of scope.
 
 ---
 
@@ -124,8 +123,6 @@ Post-checks are performed by `verify.py` in Workflow Step 3 (drift-log dirs, set
 |---|---|---|
 | Drift-log open dir | `.claude/drift-log/open/` | always |
 | Drift-log applied dir | `.claude/drift-log/applied/` | always |
-| Claudelint config | `.claudelintrc.json` | always |
-| Claudelint ignore | `.claudelintignore` | always |
 | Skills README | `.claude/skills/README.md` | always |
 | CLAUDE.md | `CLAUDE.md` (project root) | only if no `CLAUDE.md` exists |
 | AGENTS.md symlink | `AGENTS.md` (project root) → `CLAUDE.md` | only if `CLAUDE.md` was just created |
@@ -142,6 +139,4 @@ For the template sources, see:
 | Template | Source path |
 |---|---|
 | `CLAUDE.md.tmpl` | `${CLAUDE_PLUGIN_ROOT}/templates/CLAUDE.md.tmpl` |
-| `claudelintrc.json` | `${CLAUDE_PLUGIN_ROOT}/templates/claudelintrc.json` |
-| `claudelintignore` | `${CLAUDE_PLUGIN_ROOT}/templates/claudelintignore` |
 | `skills-authoring-standard.md` | `${CLAUDE_PLUGIN_ROOT}/templates/skills-authoring-standard.md` |

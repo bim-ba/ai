@@ -21,5 +21,6 @@
 - **`uv` is the tooling prerequisite for the Claude Code side and all repo Python.** The SessionStart hook and `/setup` run Python through `uv run`; do not introduce `jq`, `yq`, or `npx`.
 - **Extracted scripts are stdlib-only** with a PEP 723 header (`requires-python = ">=3.9"`, `dependencies = []`), run via `uv run`.
 - **Skills follow** `plugins/core/templates/skills-authoring-standard.md` (workflow vs rulebook categories, naming convention, self-contained structure).
+- **Hooks and custom agents follow** `plugins/core/templates/hooks-authoring-standard.md` and `agents-authoring-standard.md` (module-per-hook wired through `settings.json`; self-contained agent prompts with baked-in dispatch guards). Consulted on-demand, not scaffolded by `/setup`.
 - **Plugins cannot inject always-on instructions** — generic behavior goes through the `core` SessionStart hook, never a shipped CLAUDE.md.
 - **`main` is the published trunk** the marketplace resolves from (`/plugin marketplace add bim-ba/ai`) — keep it working. Do feature work on branches and merge into `main` via PR.

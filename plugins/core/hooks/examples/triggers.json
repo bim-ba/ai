@@ -1,0 +1,23 @@
+{
+  "_comment": "Data for the brainstorm-router (brainstorm_router.py). design_signals: lowercased substrings that mark a DESIGN / multi-option / 'which is better' intent in the submitted prompt. High-precision by design - add only phrases that strongly imply option-space exploration. These are GENERIC placeholder examples; replace them with your project's own phrases (any language works - the match is a plain lowercased substring test). min_len skips one-line acks. Edit here, not in code, so the hook source stays pure ASCII.",
+  "min_len": 30,
+  "design_signals": [
+    "which approach",
+    "what approach",
+    "how should we",
+    "how should i",
+    "which option",
+    "which is better",
+    "design the",
+    "architecture for",
+    "compare approaches",
+    "pros and cons",
+    "best way to",
+    "should we use",
+    "what's the best",
+    "evaluate options",
+    "weigh the",
+    "trade-off",
+    "tradeoff"
+  ]
+}

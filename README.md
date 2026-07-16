@@ -1,16 +1,14 @@
 <p align="center">
-  <img src=".github/assets/social-preview.png" alt="ai — Claude Code &amp; opencode plugin marketplace" width="100%">
+  <img src=".github/assets/social-preview.png" alt="ai — Claude Code plugin marketplace" width="100%">
 </p>
 
 # ai
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-5A67D8)](https://docs.claude.com/en/docs/claude-code)
-[![npm](https://img.shields.io/npm/v/@bim-ba/ai-opencode?color=5A67D8&label=opencode%20plugin)](https://www.npmjs.com/package/@bim-ba/ai-opencode)
-[![provenance](https://img.shields.io/badge/npm-provenance-5A67D8?logo=npm)](https://www.npmjs.com/package/@bim-ba/ai-opencode#provenance)
 [![CI](https://github.com/bim-ba/ai/actions/workflows/ci.yml/badge.svg)](https://github.com/bim-ba/ai/actions/workflows/ci.yml)
 
-A Claude Code **and** opencode plugin marketplace providing reusable agent behavior, project scaffolding, and data-engineering skills.
+A Claude Code plugin marketplace providing reusable agent behavior, project scaffolding, and data-engineering skills.
 
 <p align="center">
   <img src=".github/assets/demo.gif" alt="ai /setup scaffolding demo" width="100%">
@@ -19,7 +17,7 @@ A Claude Code **and** opencode plugin marketplace providing reusable agent behav
 ## Requirements
 
 - [`uv`](https://docs.astral.sh/uv/) — **required** for Claude Code. The `core` SessionStart hook and the `/setup` scripts run Python through `uv run`. Without `uv`, the behaviour-protocol injection is skipped (the session still works).
-- **Claude Code** — install via the marketplace (below). Or **opencode** — install the npm plugin (below). Either works; the skills and behaviour protocol are shared.
+- **Claude Code** — install via the marketplace (below).
 
 ## Install
 
@@ -30,23 +28,6 @@ A Claude Code **and** opencode plugin marketplace providing reusable agent behav
 ```
 
 `core` for any project, `data` for data projects.
-
-**opencode** — add the plugin to your `opencode.json`:
-
-```json
-{ "$schema": "https://opencode.ai/config.json", "plugin": ["@bim-ba/ai-opencode"] }
-```
-
-The plugin self-wires: it injects the shared behaviour protocol as `instructions` and the shared skills into `skills.paths`, and registers a `session.idle` drift-log reminder. Requires opencode (runs on Bun).
-
-## Agent parity
-
-| Capability | Claude Code | opencode |
-|------------|-------------|----------|
-| Skills (`SKILL.md`) | ✅ native | ✅ via `skills.paths` (self-wired) |
-| Behaviour protocol | ✅ SessionStart hook | ✅ injected into `instructions` (self-wired) |
-| Drift-log reminder | ✅ Stop hook | ✅ `session.idle` event hook |
-| Delivery | git marketplace (`bim-ba/ai`) | npm (`@bim-ba/ai-opencode`) |
 
 ## Domains
 
@@ -112,11 +93,9 @@ Then export the referenced environment variables. `.mcp.json` is git-ignored —
 - New skills follow `plugins/core/templates/skills-authoring-standard.md`.
 - Specs and plans live in `docs/superpowers/`.
 
-## CI & release
+## CI
 
-- **CI** (`.github/workflows/ci.yml`) runs on every push/PR to `main`: the `/setup` Python suite across `ubuntu`/`macos`/`windows` × Python 3.9–3.13, the opencode plugin's Bun tests, and an `npm pack` tarball-contents check. This is the merge gate.
-- **Advisory smoke** (`.github/workflows/advisory-smoke.yml`) is advisory — manual (`workflow_dispatch`) + nightly. The `skill-matrix` job runs a live opencode agent across the top free OpenRouter models (by weekly popularity) so each model genuinely loads the shared skills, then validates that **every** repo skill is discovered — reported as a per-model table plus a collapsible parsed-list and raw-agent-output for each. Requires the `OPENROUTER_API_KEY` repo secret; skips cleanly without it. Never blocks a merge.
-- **Release** (`.github/workflows/release.yml`) publishes `@bim-ba/ai-opencode` to npm with provenance when a `v<version>` tag is pushed (the tag must match the package version). Auth is **OIDC trusted publishing** — no long-lived token. One-time setup: (1) publish `0.1.0` once manually (`cd packages/ai-opencode && npm login && npm publish --access public`) so the package exists; (2) on npmjs.com → package → Settings → Trusted publishing, add provider GitHub Actions, repo `bim-ba/ai`, workflow `release.yml`, environment `release`; (3) delete any `NPM_ACCESS_TOKEN`/`NPM_TOKEN` secret. After that, every `v*` tag publishes hands-free.
+- **CI** (`.github/workflows/ci.yml`) runs on every push/PR to `main`: the `/setup` Python suite across `ubuntu`/`macos`/`windows` × Python 3.9–3.13. This is the merge gate.
 
 ## License
 

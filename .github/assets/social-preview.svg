@@ -25,7 +25,7 @@
   <path d="M372 150 l12 34 34 12 -34 12 -12 34 -12 -34 -34 -12 34 -12 z" fill="url(#accent)"/>
 
   <!-- tagline -->
-  <text x="116" y="372" font-size="44" font-weight="700" fill="#E6E9F2">Claude Code &amp; opencode plugin marketplace</text>
+  <text x="116" y="372" font-size="44" font-weight="700" fill="#E6E9F2">Claude Code plugin marketplace</text>
   <text x="116" y="416" font-size="27" fill="#9AA4BF">reusable agent behaviour, workflow &amp; data-engineering skills</text>
 
   <!-- feature chips -->
@@ -54,5 +54,5 @@
 
   <!-- footer -->
   <text x="116" y="582" font-size="26" font-weight="700" fill="#5A67D8">github.com/bim-ba/ai</text>
-  <text x="1164" y="582" font-size="22" text-anchor="end" fill="#6B7280">Claude Code · opencode</text>
+  <text x="1164" y="582" font-size="22" text-anchor="end" fill="#6B7280">Claude Code</text>
 </svg>

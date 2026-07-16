@@ -12,10 +12,10 @@ class TestRepoHealth(unittest.TestCase):
     def test_contributing_exists(self):
         self.assertTrue((ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8").strip())
 
-    def test_dependabot_two_ecosystems(self):
+    def test_dependabot_github_actions_only(self):
         txt = (ROOT / ".github" / "dependabot.yml").read_text(encoding="utf-8")
         self.assertIn("github-actions", txt)
-        self.assertIn("npm", txt)
+        self.assertNotIn("npm", txt)  # no JS package to bump; github-actions is the only ecosystem
         self.assertNotIn("pip", txt)  # Python side is stdlib-only, no deps to bump
 
 

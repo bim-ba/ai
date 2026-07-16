@@ -15,5 +15,3 @@ Thanks for your interest in `ai`.
 ```
 uv run --no-project python -m unittest discover -s tests -t tests -p "test_*.py" -v
 ```
-
-The opencode adapter (`packages/ai-opencode/`) uses Bun: `bun test`.

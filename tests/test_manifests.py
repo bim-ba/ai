@@ -14,8 +14,6 @@ JSON_FILES = [
     "plugins/core/.claude-plugin/plugin.json",
     "plugins/data/.claude-plugin/plugin.json",
     "plugins/core/hooks/hooks.json",
-    "opencode.json",
-    "packages/ai-opencode/package.json",
 ]
 
 
@@ -37,20 +35,6 @@ class Manifests(unittest.TestCase):
         self.assertEqual(names, {"core", "data"})
         for p in m["plugins"]:
             self.assertTrue((REPO / p["source"]).is_dir(), p["source"] + " missing")
-
-    def test_opencode_package_manifest(self):
-        pkg = load("packages/ai-opencode/package.json")
-        self.assertEqual(pkg["name"], "@bim-ba/ai-opencode")
-        self.assertEqual(pkg["type"], "module")
-        self.assertIn("opencode", pkg["engines"])
-        self.assertEqual(pkg["publishConfig"]["access"], "public")
-
-    def test_opencode_dogfood_config_points_at_real_paths(self):
-        c = load("opencode.json")
-        for instr in c["instructions"]:
-            self.assertTrue((REPO / instr).is_file(), instr + " missing")
-        for sp in c["skills"]["paths"]:
-            self.assertTrue((REPO / sp).is_dir(), sp + " missing")
 
 
 if __name__ == "__main__":

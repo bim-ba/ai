@@ -140,3 +140,9 @@ For the template sources, see:
 |---|---|
 | `CLAUDE.md.tmpl` | `${CLAUDE_PLUGIN_ROOT}/templates/CLAUDE.md.tmpl` |
 | `skills-authoring-standard.md` | `${CLAUDE_PLUGIN_ROOT}/templates/skills-authoring-standard.md` |
+| `hooks-authoring-standard.md` | `${CLAUDE_PLUGIN_ROOT}/templates/hooks-authoring-standard.md` |
+| `agents-authoring-standard.md` | `${CLAUDE_PLUGIN_ROOT}/templates/agents-authoring-standard.md` |
+
+`skills-authoring-standard.md` is scaffolded into a project (as `.claude/skills/README.md`); the
+`hooks-` and `agents-` standards are NOT auto-scaffolded (hooks and custom agents are optional per
+project) -- consult them from `${CLAUDE_PLUGIN_ROOT}/templates/` when authoring a hook or a custom agent.

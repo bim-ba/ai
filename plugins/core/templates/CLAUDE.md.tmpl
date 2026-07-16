@@ -1,13 +1,107 @@
 # {{PROJECT_NAME}}
 
-> Baseline agent behavior is provided by ai/core (injected each session via the SessionStart hook); add only project-specific rules here.
+<!-- One or two lines: what this project is (domain + primary stack) and the single most
+     important thing an agent must know before touching it. No history, no generic advice. -->
 
-## Project Overview
+> Baseline agent discipline (research / validate / challenge / check-in / verification / lethal-trifecta)
+> is injected every session by ai/core via its SessionStart hook; personal voice, tooling, git, and
+> secrets defaults come from the user layer. This file holds ONLY project-specific facts -- do not
+> restate generic agent behavior here.
 
-<!-- Describe what this project does, its primary language/stack, and any key constraints the agent needs to know about. -->
+---
 
-## Project-Specific Conventions
+## Stack & layout
 
-<!-- Add conventions that override or extend the baseline only where this project differs.
-     Examples: custom lint commands, non-standard directory layout, deployment targets,
-     domain-specific terminology, or workflow steps specific to this repo. -->
+<!-- The languages, frameworks, storage, compute, orchestration, and deploy targets that are specific
+     to THIS repo -- what an agent must know to reason about the system. Cross-link the source-of-truth
+     files (manifests, config) instead of copying their contents. Every stack fact is a map, not an
+     authority: keep it current, and still verify load-bearing facts against source. -->
+
+---
+
+## Source-of-truth
+
+<!-- Where authoritative answers live, cheapest-first: local mirrors/clones, prebuilt indexes/graphs,
+     live MCP servers (data / catalog / VCS), external docs. The generic rule -- route every load-bearing
+     claim to its cheapest authoritative source, verify THIS turn, cite it -- lives in ai/core
+     (core:researching-rigorously). This section is the PROJECT-SPECIFIC ladder only.
+     Call out which facts are mutable live-state that MUST come from a live query this turn, never a
+     dated artifact (a log, a prior-session note, even this file -- a snapshot).
+     Delete this section if the project has no non-obvious sources. -->
+
+---
+
+## Project-specific rules
+
+<!-- MANDATORY. The conventions that are TRUE HERE and would surprise an agent applying defaults:
+     naming, migration mechanics, git hygiene, credential handling, language-by-surface, any hard-won
+     constraint. For each: what is required, what is forbidden, the edge case. Lead with the rule; put
+     the "why" in one clause, not a paragraph. -->
+
+-
+
+---
+
+## Repository Map
+
+<!-- The directory / module layout: what each top-level area is FOR and which one is the build target.
+     A newcomer agent should learn where to look from this table alone. Link paths as clickable refs.
+     Delete if the layout is self-evident. -->
+
+---
+
+## Documentation Map
+
+<!-- Where docs, specs, onboarding, and design history live -- and which is authoritative vs local-only
+     scratch. Point to the source-of-truth doc per concern; note the lifecycle (what gets distilled into
+     a durable home vs stays scratch). Delete if there is no meaningful documentation surface yet. -->
+
+---
+
+## Skills Registry
+
+<!-- The skills under .claude/skills/ plus the plugin skills reachable via the Skill tool. Reading a
+     skill's SKILL.md before use is mandatory. Skills follow templates/skills-authoring-standard.md
+     (workflow vs rulebook). Delete the router below if there are no project skills yet. -->
+
+| Skill | Path | When to load |
+|-------|------|--------------|
+|  | `.claude/skills/<name>/` |  |
+
+### Task -> skill router
+
+<!-- Map concrete task shapes to the skill to load, so an agent scanning this table picks the right
+     context unambiguously. -->
+
+| If the task is... | Load |
+|---|---|
+|  |  |
+
+---
+
+## CLI Tools & MCP
+
+<!-- Project CLIs (task runner, linters, generators) beyond the personal-layer defaults, and the MCP
+     servers configured in .mcp.json (gitignored; copy from .mcp.example.json). Document the always-on
+     safety subset of per-server gotchas here: concurrency limits, read-vs-metadata access, which host
+     an entry targets (prod vs dev). Delete if the project uses no project-specific tooling or MCP. -->
+
+---
+
+## Directory & File Conventions
+
+<!-- Conventions for non-code surfaces: the drift-log workflow, handoff / state files, worktree layout,
+     hooks (see templates/hooks-authoring-standard.md), custom agents (see
+     templates/agents-authoring-standard.md), audit reports -- and what must never enter shared history. -->
+
+- **Drift-log** at `.claude/drift-log/{open,applied}/` -- log divergences per the `core:creating-drift-logs`
+  skill; the ai/core Stop hook reminds each turn, and if nothing qualifies acknowledge in the check-in
+  with `drift-log delta: none`.
+
+---
+
+<!-- ## <project extra>
+
+     Optional trailing section(s) for a capability that does not fit above -- a project-wide tool
+     (e.g. a knowledge graph), a domain primer, a subsystem deep-dive. Add only on demonstrated need
+     (YAGNI); delete this placeholder otherwise. -->

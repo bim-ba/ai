@@ -113,3 +113,7 @@ The common events and what a hook on each is for:
 
 Only `PreToolUse` can BLOCK (exit 2). Every other event's hook is advisory -- it emits context or a
 reminder and must exit 0.
+
+## 7. Runnable examples
+
+`plugins/core/hooks/examples/` ships copyable, genericized starters that conform to this standard: a shared `utils.py` + `models.py` skeleton (the `run(main)` error-swallow, `read_payload`, `emit_additional_context` plumbing) plus three example guards -- `artifact_guard.py` (PostToolUse, ASCII / hard-wrap lint), `config_guard.py` (PreToolUse, hardcoded-secret / weakened-guardrail warn), and `brainstorm_router.py` + `triggers.json` (UserPromptSubmit, design-prompt nudge showing the data-not-code trigger pattern). They are EXAMPLES -- not wired into `hooks.json`, so they never auto-run; copy the ones you want into a project's `.claude/hooks/src/` and wire them in `settings.json`. Per-hook wiring snippets are in `examples/README.md`.

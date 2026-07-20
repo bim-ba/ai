@@ -40,7 +40,12 @@ Hooks are grouped by DOMAIN (not by event), so the tree documents itself:
 2. **Start with a module docstring:** which event it binds to, what it decides, why, and a one-line
    `Test:` invocation someone can paste to exercise it.
 3. **Standard library only.** A hook runs on every matching event and must start instantly -- no
-   third-party imports, no `uv run`, no venv startup cost.
+   third-party imports, no venv startup cost. The dependency rule is non-negotiable; the launcher is
+   a tradeoff. This plugin's own hooks run `uv run --no-project python "${CLAUDE_PLUGIN_ROOT}/hooks/<module>.py"`,
+   which keeps the interpreter uniform across machines; a project-local `.claude/hooks/src/` module
+   uses bare `python3` where per-event startup cost dominates. `--script` is for a module carrying a
+   PEP-723 header and is unnecessary for a stdlib-only hook. Never `uv run` WITHOUT `--no-project`:
+   that resolves the project's environment and can install packages mid-session.
 4. **Read the payload from stdin, decide, and emit only if acting.** Use the shared `read_payload()` and
    emit helpers from `utils.py`; import payload shapes from `models.py`. A hook that decides not to act
    emits nothing.
@@ -111,8 +116,54 @@ The common events and what a hook on each is for:
 | `PostToolUse` | after a matched tool runs | lint just-written output (unicode, hard-wrap), suggest a follow-up |
 | `Stop` | the agent finishes a turn | end-of-turn checks / reminders (e.g. the drift-log nudge) |
 
-Only `PreToolUse` can BLOCK (exit 2). Every other event's hook is advisory -- it emits context or a
-reminder and must exit 0.
+Blocking is per-event, not exclusive to `PreToolUse`, and what "block" MEANS differs per event:
+`PreToolUse` prevents the tool from running; `UserPromptSubmit` discards the prompt; `Stop` and
+`SubagentStop` refuse to let the turn end and hand the reason back as work to do. `PostToolUse`
+runs after the tool has already executed, so it can only feed the model - it cannot undo the call.
+Consult the current docs before assuming any of this (https://code.claude.com/docs/en/hooks).
+
+Three channels reach the model, and plain stdout on exit 0 is NOT one of them for most events:
+
+| Channel | How | Reaches the model on |
+|---|---|---|
+| stdout as context | print the text, exit 0 | `UserPromptSubmit`, `UserPromptExpansion`, `SessionStart` ONLY |
+| JSON on stdout, exit 0 | `{"decision":"block","reason":"..."}` or `{"hookSpecificOutput":{"hookEventName":"<Event>","additionalContext":"..."}}` | every event that supports the field |
+| stderr, exit 2 | write to stderr, exit 2 | every blocking event |
+
+A `Stop` hook that `echo`s a reminder and exits 0 is a SILENT NO-OP: the text goes to the debug log,
+never to the model. This exact bug shipped here and went unnoticed for 24 days -- always verify a
+new hook end-to-end against a throwaway project before trusting it.
+
+Choosing between the two JSON channels on `Stop` is a question about the USER, not the model:
+
+| | `decision: block` | `additionalContext` |
+|---|---|---|
+| Reaches the model | yes, as `reason` | yes, wrapped in a system reminder |
+| Keeps the conversation going | yes | yes - identically |
+| Loop protections | `stop_hook_active` + the 8-consecutive-continuation cap | the same two |
+| Shown to the user | as a hook ERROR notification | labelled `Stop hook feedback` in the transcript, no error notification |
+| Use for | a real failure the turn must not end on (build broken, guard tripped) | a standing convention, a status update, guidance the agent should weigh |
+
+The two are NOT "force" versus "suggest" - both continue the turn under the same protections.
+The only difference is how it is surfaced, so pick by whether the situation is an ERROR. A hook
+that fires routinely and blocks paints an error notification every turn for something that is
+not an error, and users learn to ignore notifications. Reserve blocking for actual failures.
+
+`additionalContext` is capped at 10,000 characters, and when several hooks return one for the
+same event the model receives all of them.
+
+Guard either channel with the `stop_hook_active` payload field so it fires once per turn rather
+than in a loop. Prefer the strict form `payload.get("stop_hook_active") is not False` over a
+truthiness test: an older harness that omits the field then degrades to silence instead of
+firing every time. The platform also caps consecutive blocks, but never rely on that as the
+only brake.
+
+The `Stop` payload also carries `last_assistant_message` - the final assistant text of the turn,
+which the docs recommend over reading the transcript file (it may lag). That is the stateless
+way to gate on what a turn actually CONTAINED. Reach for them before inventing a
+marker file: a hook that keeps state about previous turns can change the thing it measures, and
+one that writes that state to a predictable path in a shared temp directory is a symlink
+truncation waiting to happen.
 
 ## 7. Runnable examples
 

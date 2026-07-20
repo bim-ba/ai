@@ -137,7 +137,6 @@ The mechanism is documented in rule 12. The idiom: when you know the subquery yi
 
 - Rule 01 (`cte-wrap-federation`) — when CTE-wrap is the right answer (single reference, postgresql() collapse)
 - Rule 12 (`federated-postgresql`) — full pushdown rules, including the `= (subquery)` mechanism explained in idiom 5
-- Plugin skill `clickhouse-best-practices` — schema-level / table-design idioms
 
 ## Sources
 

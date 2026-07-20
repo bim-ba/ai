@@ -33,7 +33,10 @@ NUDGE = (
 
 
 def main() -> None:
-    prompt = str(read_payload().get("prompt", ""))
+    payload = read_payload()
+    if payload is None:
+        return  # unreadable input: stay out of the way
+    prompt = str(payload.get("prompt", ""))
     if len(prompt.strip()) < _MIN_LEN:
         return
     low = prompt.lower()

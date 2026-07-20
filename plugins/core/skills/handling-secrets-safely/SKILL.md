@@ -57,4 +57,4 @@ A dispatched prompt is context - a secret in it is a leak. Never reproduce a cre
 
 ## References
 
-Rotation cadence and where-secrets-live policy: the personal layer and each project's `CLAUDE.md`. The `security/config_guard` hook example (`plugins/core/hooks/examples/`) enforces the "no hardcoded secret / no weakened guardrail" slice of this at write time.
+Rotation cadence and where-secrets-live policy: the personal layer and each project's `CLAUDE.md`. The `config_guard.py` hook example (`plugins/core/hooks/examples/`) enforces the "no hardcoded secret / no weakened guardrail" slice of this at write time.

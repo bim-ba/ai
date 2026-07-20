@@ -95,7 +95,7 @@ Sorted by severity. Each item should be a single-session task.
 ## Companion runs
 
 After reviewing this report, also run:
-- `/claude-md-improver` — qualitative scoring + targeted edit suggestions for `CLAUDE.md` files
+- `/claude-md-management:claude-md-improver` — qualitative scoring + targeted edit suggestions for `CLAUDE.md` files
 ````
 
 ## Notes

@@ -123,6 +123,8 @@ def _scan_hardwrap(text: str):
 
 def main() -> None:
     payload = read_payload()
+    if payload is None:
+        return  # unreadable input: stay out of the way
     t = tool_input(payload)
     tool_name = payload.get("tool_name", "")
     file_path = str(t.get("file_path") or "")

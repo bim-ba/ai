@@ -1,6 +1,6 @@
 ---
 name: reviewing-agent-instructions
-description: Use when the user wants to review AI-agent instruction files (CLAUDE.md, skills, drift-log, hooks) for pollution, duplication, dead references, contradictions, or architectural debt. Manual on-demand only. Outputs a committed markdown report; does no auto-fix. Always run together with /claude-md-improver for full coverage.
+description: Use when the user wants to review AI-agent instruction files (CLAUDE.md, skills, drift-log, hooks) for pollution, duplication, dead references, contradictions, or architectural debt. Manual on-demand only. Outputs a committed markdown report; does no auto-fix. Always run together with /claude-md-management:claude-md-improver for full coverage.
 type: skill
 category: workflow
 ---
@@ -13,7 +13,7 @@ Manual on-demand review of AI-agent instruction surface in this repo. Produces a
 
 - The user asks to audit, review, or check the agent-instruction surface (CLAUDE.md, skills, drift-log, hooks)
 - The user is preparing for a cleanup pass and wants a fact-finding report first
-- The user runs this together with `claude-md-improver` (recommended — they're complementary)
+- The user runs this together with `claude-md-management:claude-md-improver` (recommended — they're complementary)
 
 ## When NOT to use
 
@@ -84,14 +84,14 @@ Tell the user:
 - Path to the report
 - Findings count (H/M/L)
 - Top 3 actionable items
-- Reminder to run `/claude-md-improver` for qualitative CLAUDE.md scoring
+- Reminder to run `/claude-md-management:claude-md-improver` for qualitative CLAUDE.md scoring
 
 ## Non-goals
 
 - ❌ No auto-fix. Report only.
 - ❌ No state tracking. Full re-run every time.
 - ❌ No drift-log entries created from findings. Audit findings ≠ drift-log entries.
-- ❌ No CLAUDE.md quality scoring (delegated to `claude-md-improver`).
+- ❌ No CLAUDE.md quality scoring (delegated to `claude-md-management:claude-md-improver`).
 
 ## References
 
@@ -102,5 +102,5 @@ Tell the user:
 
 ## Related skills
 
-- `claude-md-improver` (claude-md-management plugin) — companion skill for CLAUDE.md qualitative review
+- `claude-md-management:claude-md-improver` — companion skill for CLAUDE.md qualitative review
 - `superpowers:writing-skills` — source of best-practices reference for skill conformance checks

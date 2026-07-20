@@ -37,6 +37,6 @@ The JSON array schema per item:
 
 ## What Level 1 does NOT do
 
-- No quality judgments (delegated to `claude-md-improver`)
+- No quality judgments (delegated to `claude-md-management:claude-md-improver`)
 - No semantic comparison between files (Level 2)
 - No "is this a good rule?" reasoning (Level 3)

@@ -78,7 +78,7 @@ For each `SKILL.md`, check conformance against `superpowers:writing-skills` AND 
 
 - Frontmatter present with `name`, `description`, AND `category: workflow|rulebook`
 - `description` is specific enough to be auto-triggered (anti-pattern: vague verbs like "use when working with X")
-- SKILL.md within the layer ceiling (500 lines per `scripts/audit/check-size.sh`); if larger, content should be split into `references/`
+- SKILL.md within the 500-line layer ceiling (see `skills-authoring-standard.md`); if larger, content should be split into `references/`
 - Required sections present for the declared category:
   - **workflow** — Purpose, Pre-checks, Workflow, Post-checks, Guardrails, Artifact Map, References Guide
   - **rulebook** — When to use, When NOT to use, Rules (or domain analogue), Examples, Anti-patterns

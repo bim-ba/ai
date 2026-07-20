@@ -13,12 +13,17 @@ import sys
 from models import HookEvent, ToolInput
 
 
-def read_payload() -> HookEvent:
-    """Return the hook event JSON from stdin, or {} if it is absent or malformed."""
+def read_payload() -> HookEvent | None:
+    """Return the hook event JSON from stdin, or None when it is absent or malformed.
+
+    None is distinct from an empty payload: a hook that cannot read its input must stay silent
+    rather than fall back to defaults and act on an event it knows nothing about.
+    """
     try:
-        return json.load(sys.stdin)
+        payload = json.load(sys.stdin)
     except Exception:
-        return {}
+        return None
+    return payload if isinstance(payload, dict) else None
 
 
 def tool_input(payload: HookEvent) -> ToolInput:

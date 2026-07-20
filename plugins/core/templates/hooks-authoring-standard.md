@@ -54,13 +54,18 @@ Hooks are grouped by DOMAIN (not by event), so the tree documents itself:
    the pattern -- a broken hook degrades to a no-op, never to a blocked session.
 6. **Keep it ASCII** per the file-artifact rule (`->` not smart arrows, `-` not em/en-dash, no section
    sign) -- hook output is injected into the agent's context as plain text.
-7. **Wire it in `settings.json`** as:
+7. **Wire it where the hook LIVES, and the form follows from that.** A PROJECT hook goes in
+   `settings.json`:
    ```
    PYTHONPATH="$CLAUDE_PROJECT_DIR/.claude/hooks/src" python3 -m <package>.<module>
    ```
    The `PYTHONPATH` prefix puts `src/` on the import path (so `import utils` / `import models` resolve)
    while cwd stays at the project root (so any cwd-relative check the hook does keeps working).
    `$CLAUDE_PROJECT_DIR` is the documented project-root variable, so the hook is cwd-independent.
+   A PLUGIN-shipped hook goes in `hooks.json` and addresses its file directly under
+   `${CLAUDE_PLUGIN_ROOT}` -- there is no project `src/` to put on the path, and the plugin must run
+   identically in a project that has no `.claude/hooks/` at all. This plugin's own hooks take that
+   second form; see rule 3 for the launcher tradeoff.
 8. **Commit the modules.** Hooks do not fire in a fresh clone (or for a subagent) if the files are
    missing -- an uncommitted hook silently does nothing for anyone else.
 
@@ -73,7 +78,10 @@ path. From the project root the package lives under `.claude/hooks/src/`, and `.
 identifier in a dotted name, so it cannot be addressed by `-m` directly. Putting `src/` on `PYTHONPATH`
 is the clean fix and keeps cwd at the project root (a `cd .../src` would work too but then breaks any
 cwd-relative check the hook makes). `uv run -m` has the same `sys.path` semantics and adds venv startup
-cost, so it is not used.
+cost, so a PROJECT hook does not use it -- there, per-event startup cost dominates and `python3` is
+already the right interpreter. A PLUGIN-shipped hook makes the opposite trade (rule 3): it cannot
+assume which `python3` a given machine has, so it pays the startup cost for a uniform interpreter.
+Same rule, different constraint -- not an exception.
 
 ---
 

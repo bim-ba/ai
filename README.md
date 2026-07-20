@@ -16,7 +16,7 @@ A Claude Code plugin marketplace providing reusable agent behavior, project scaf
 
 ## Requirements
 
-- [`uv`](https://docs.astral.sh/uv/) — **required** for Claude Code. The `core` SessionStart hook and the `/setup` scripts run Python through `uv run`. Without `uv`, the behaviour-protocol injection is skipped (the session still works).
+- [`uv`](https://docs.astral.sh/uv/) — **required** for Claude Code. The `core` SessionStart hook and the `/setup` scripts run Python through `uv run`. Without `uv`, both `core` hooks are skipped -- the SessionStart behaviour-protocol injection AND the Stop drift-log reminder (the session still works, silently).
 - **Claude Code** — install via the marketplace (below).
 
 ## Install

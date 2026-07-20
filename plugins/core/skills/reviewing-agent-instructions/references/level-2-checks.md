@@ -78,7 +78,7 @@ For each `SKILL.md`, check conformance against `superpowers:writing-skills` AND 
 
 - Frontmatter present with `name`, `description`, AND `category: workflow|rulebook`
 - `description` is specific enough to be auto-triggered (anti-pattern: vague verbs like "use when working with X")
-- SKILL.md within the 500-line layer ceiling (see `skills-authoring-standard.md`); if larger, content should be split into `references/`
+- SKILL.md stays a routing layer rather than a rulebook: this check flags one over ~500 lines as a split candidate (a threshold owned by this check -- `skills-authoring-standard.md` states no line ceiling), with the overflow moving into `references/`
 - Required sections present for the declared category:
   - **workflow** — Purpose, Pre-checks, Workflow, Post-checks, Guardrails, Artifact Map, References Guide
   - **rulebook** — When to use, When NOT to use, Rules (or domain analogue), Examples, Anti-patterns

@@ -46,6 +46,8 @@ A Claude Code plugin marketplace providing reusable agent behavior, project scaf
 | `reviewing-agent-instructions` | core | Audits the agent-instruction surface (CLAUDE.md, skills, drift-log, hooks) for pollution, duplication, dead refs, and contradictions. Report-only, no auto-fix. | Manual |
 | `researching-rigorously` | core | Rigorous research / validation / fact-check: fans out parallel subagents per source, cross-validates via MCP + web, and cites sources. | Auto on research / validation tasks |
 | `documenting-meetings` | core | Turns an SRT audio transcript into structured meeting notes (decisions, action items, discussion summary). | Manual |
+| `handling-secrets-safely` | core | Structural safeguards for secret-bearing files -- never edit them through tools, boolean/count probes only, indirection instead of literals. | Auto when a task touches credentials |
+| `thinning-agent-instructions` | core | Cuts an over-grown instruction surface back to what is load-bearing, without losing a rule that is still earning its place. | Manual |
 | `using-playwright` | core | Drives web UIs through the Playwright MCP — SSO login, Monaco/textarea editors, content extraction. | Auto when using the Playwright MCP |
 | `clickhouse-query-best-practices` | data | Rulebook for ad-hoc research SQL in dbt-ClickHouse and federated `postgresql()` queries (CTE-wrapping, dedup, flow analysis, source citation, style). | Auto when writing / reviewing ClickHouse SQL |
 

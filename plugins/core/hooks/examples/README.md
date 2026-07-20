@@ -38,10 +38,15 @@ printf '{"tool_name":"Write","tool_input":{"file_path":"x.md","content":"a \u201
 
 ## Wiring (one entry per hook in your `settings.json`)
 
-`$CLAUDE_PLUGIN_ROOT` is the plugin-root variable; the `PYTHONPATH` prefix puts this `examples/`
-directory on the import path (so `import utils` / `import models` resolve) while cwd stays at the
-project root (so `in_project()` keeps working). See the authoring standard for why `PYTHONPATH` and
-not a bare `-m`.
+COPY these files into your project first -- `.claude/hooks/examples/` is the path the snippets below
+assume. A project `settings.json` is not loaded by the plugin loader, so `$CLAUDE_PLUGIN_ROOT` is
+UNSET there and the wiring silently resolves to nothing (`No module named artifact_guard`, exit 0 --
+a hook that does not run looks exactly like a hook that found nothing). Use `$CLAUDE_PROJECT_DIR`,
+the documented project-root variable, per rule 7 of the authoring standard.
+
+The `PYTHONPATH` prefix puts the directory on the import path (so `import utils` / `import models`
+resolve) while cwd stays at the project root (so `in_project()` keeps working). See the authoring
+standard for why `PYTHONPATH` and not a bare `-m`.
 
 ```jsonc
 {
@@ -49,17 +54,17 @@ not a bare `-m`.
     "PostToolUse": [
       { "matcher": "Write|Edit", "hooks": [
         { "type": "command",
-          "command": "PYTHONPATH=\"$CLAUDE_PLUGIN_ROOT/hooks/examples\" python3 -m artifact_guard" } ] }
+          "command": "PYTHONPATH=\"$CLAUDE_PROJECT_DIR/.claude/hooks/examples\" python3 -m artifact_guard" } ] }
     ],
     "PreToolUse": [
       { "matcher": "Write|Edit", "hooks": [
         { "type": "command",
-          "command": "PYTHONPATH=\"$CLAUDE_PLUGIN_ROOT/hooks/examples\" python3 -m config_guard" } ] }
+          "command": "PYTHONPATH=\"$CLAUDE_PROJECT_DIR/.claude/hooks/examples\" python3 -m config_guard" } ] }
     ],
     "UserPromptSubmit": [
       { "hooks": [
         { "type": "command",
-          "command": "PYTHONPATH=\"$CLAUDE_PLUGIN_ROOT/hooks/examples\" python3 -m brainstorm_router" } ] }
+          "command": "PYTHONPATH=\"$CLAUDE_PROJECT_DIR/.claude/hooks/examples\" python3 -m brainstorm_router" } ] }
     ]
   }
 }

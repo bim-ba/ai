@@ -6,7 +6,7 @@ Channel:   `hookSpecificOutput.additionalContext` on stdout, exit 0. Plain stdou
            reaches the model only on UserPromptSubmit / UserPromptExpansion / SessionStart, so a
            `Stop` hook that echoes a reminder is a silent no-op - the bug this file replaces.
 
-Channels considered and rejected (behaviour-protocol.md:17 requires naming them):
+Channels considered and rejected (behaviour-protocol.md, the "Prefer existing solutions" bullet requires naming them):
     `{"decision": "block"}`  - reaches the model too, and continues the turn under the SAME
         loop protections, so this is not a force-versus-suggest choice. The difference is that
         block surfaces as a hook ERROR notification while additionalContext is labelled

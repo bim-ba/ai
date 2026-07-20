@@ -16,7 +16,7 @@ A Claude Code plugin marketplace providing reusable agent behavior, project scaf
 
 ## Requirements
 
-- [`uv`](https://docs.astral.sh/uv/) — **required** for Claude Code. The `core` SessionStart hook and the `/setup` scripts run Python through `uv run`. Without `uv`, the behaviour-protocol injection is skipped (the session still works).
+- [`uv`](https://docs.astral.sh/uv/) — **required** for Claude Code. The `core` SessionStart hook and the `/setup` scripts run Python through `uv run`. Without `uv`, both `core` hooks are skipped -- the SessionStart behaviour-protocol injection AND the Stop drift-log reminder (the session still works, silently).
 - **Claude Code** — install via the marketplace (below).
 
 ## Install
@@ -41,7 +41,7 @@ A Claude Code plugin marketplace providing reusable agent behavior, project scaf
 | Skill | Domain | What it does | Triggers |
 |-------|--------|--------------|----------|
 | `setup` | core | Bootstraps a project with ai conventions (drift-log dirs, a thin CLAUDE.md + AGENTS.md, plugin wiring). Idempotent. | Manual: `/setup` |
-| `creating-drift-logs` | core | Captures a divergence between actual behavior and codified instructions as an immutable drift-log entry, so good conventions can be promoted later. | Auto (8 drift triggers); nudged by the Stop hook |
+| `creating-drift-logs` | core | Captures a divergence between actual behavior and codified instructions as an immutable drift-log entry, so good conventions can be promoted later. | Auto (8 drift triggers); the Stop hook reminds once at the end of each turn |
 | `reviewing-drift-logs` | core | Triages the drift-log — promotes open→applied, checks staleness, compacts entries, codifies insights into rules. | Manual |
 | `reviewing-agent-instructions` | core | Audits the agent-instruction surface (CLAUDE.md, skills, drift-log, hooks) for pollution, duplication, dead refs, and contradictions. Report-only, no auto-fix. | Manual |
 | `researching-rigorously` | core | Rigorous research / validation / fact-check: fans out parallel subagents per source, cross-validates via MCP + web, and cites sources. | Auto on research / validation tasks |

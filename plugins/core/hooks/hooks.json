@@ -16,8 +16,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo 'Drift-log check: scan the last turn against the 8 triggers in the creating-drift-logs skill. If any fired, create an entry per that skill at .claude/drift-log/open/$(date +%Y-%m-%d)-<slug>.md. Else acknowledge: \"drift-log delta: none\".'",
-            "timeout": 5
+            "command": "uv run --no-project python \"${CLAUDE_PLUGIN_ROOT}/hooks/drift_log_check.py\"",
+            "timeout": 10
           }
         ]
       }

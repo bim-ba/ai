@@ -38,6 +38,8 @@ Run this to close an entry — by implementing its proposed change, or by droppi
 
 **Gate 2 — review the codified diff adversarially, before the transition.** Translating a verified proposal into rule text introduces its own defects — a scoped measurement over-generalized, a paraphrase tightened past its source. Read the *diff*, not the entries, with a mandate to find defects rather than to approve, checking each added claim against source. Gate 1 cannot catch these: they do not exist until the rule is written. Same pass: two further defects, including a claim that held only in the repo it was measured in.
 
+**Kill-criterion for both gates.** They earn their cost by CHANGING closures. If three consecutive passes record no correction from a gate -- Gate 1 never contradicting a proposal, Gate 2 never faulting a diff -- it has become ceremony on this repo's drift rate; drop it and say so in the entry that retires it.
+
 Then the mechanical steps:
 
 1. `git mv .claude/drift-log/open/<file>.md .claude/drift-log/applied/<file>.md`
@@ -69,8 +71,8 @@ For each overdue entry, choose one path:
 | Path | When to choose | Action |
 |------|----------------|--------|
 | **Resolve** | The drift's proposed change still applies and is feasible | Implement the change → follow Path A above; set `disposition: applied` (or `already-done` if already true at HEAD) |
-| **Refile** | The original framing is wrong but the underlying observation is still relevant | Create a NEW entry with corrected framing, set `supersedes: <old-file>` in its frontmatter, then move the old file to `applied/` with `status: APPLIED`, `applied_in: <new-file>`, Resolution explaining the refile, `disposition: refiled` |
-| **Drop** | The observation no longer holds (underlying code/process changed; drift was wrong; the rule it would change has been removed) | Move to `applied/` with `status: APPLIED`, `applied_date:` today, `applied_in:` empty, Resolution explaining why no change is needed, `disposition: dropped` |
+| **Refile** | The original framing is wrong but the underlying observation is still relevant | Create a NEW entry with corrected framing carrying `supersedes: <old-file>`, then close the old one via Path A (Gate 1, then the mechanical steps) with `applied_in: <new-file>`, `disposition: refiled`, Resolution explaining the refile |
+| **Drop** | The observation no longer holds (underlying code/process changed; drift was wrong; the rule it would change has been removed) | Close via Path A (Gate 1 FIRST — a `dropped` verdict is a claim about current state, so confirm the observation really no longer holds before recording it) with `applied_in:` empty, `disposition: dropped`, Resolution explaining why no change is needed |
 
 **Never simply delete the file** — the historical record stays. Always transition through `applied/`.
 
@@ -96,12 +98,11 @@ Run this when a recurring pattern in `applied/` entries indicates a missing stan
 ## Post-checks
 
 **After OPEN → APPLIED transition:**
-- The `## Resolution` NAMES what Gate 1 was checked against (the implementing file, commit or query) and how Gate 2 was run (self-read of the diff, or delegated to a reviewer) — plus any correction they forced. "Both gates ran" as a bare assertion is unfalsifiable and every closure passes it; the trace is the only thing a later reader can check, and writing it is what makes skipping a gate visible.
-- A proposal that landed verbatim is the exception, not the norm — if the Resolution records no correction at all, say so explicitly rather than leaving the section silent
-- The file exists in `applied/`, not in `open/`
+- The `## Resolution` NAMES what Gate 1 was checked against (the implementing file, commit or query) and — for a closure that actually landed an edit — how Gate 2 was run (self-read of the diff, or delegated to a reviewer), plus any correction they forced. A `dropped` or `refiled` closure produces no diff, so it records Gate 1 only. "Both gates ran" as a bare assertion is unfalsifiable and every closure passes it; the trace is the only thing a later reader can check, and writing it is what makes skipping a gate visible.
+- A proposal that landed verbatim is the exception, not the norm — if the Resolution records no correction at all, say so explicitly rather than leaving the section silent (not applicable to `dropped`/`refiled`, which change no rule text)
+- The file exists in `applied/` and no longer in `open/` — confirming the `git mv` succeeded, rather than a copy
 - Frontmatter has `status: APPLIED`, `applied_date`, `disposition`
 - `## Resolution` section is filled
-- The file no longer appears in `open/` (confirming the `git mv` succeeded)
 - The month's `applied/INDEX-YYYY-MM.md` has a summary for the entry
 
 **After staleness triage:**
@@ -125,6 +126,7 @@ Run this when a recurring pattern in `applied/` entries indicates a missing stan
 | Artifact | Path | Naming |
 |---|---|---|
 | Applied entry | `.claude/drift-log/applied/YYYY-MM-DD-<slug>.md` | Moved from `open/`; same filename |
+| Refile entry | `.claude/drift-log/open/YYYY-MM-DD-<slug>.md` | NEW entry from Path B's Refile row; carries `supersedes: <old-file>` |
 | Monthly index | `.claude/drift-log/applied/INDEX-YYYY-MM.md` | One per calendar month |
 | Promoted rule | `<target-skill>/rules/NN-<topic>.md` or `CLAUDE.md` | Per authoring standard |
 

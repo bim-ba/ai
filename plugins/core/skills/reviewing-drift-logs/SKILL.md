@@ -32,7 +32,7 @@ This skill covers the full lifecycle of drift-log entries after they are created
 
 ### Path A: OPEN → APPLIED transition
 
-Run this to close an entry — by implementing its proposed change, or by dropping/refiling it. Two gates bracket the mechanical steps; they are what keep a bad rule out of the instruction surface, which is read as ground truth for months after the session that produced it.
+Run this to close an entry — by implementing its proposed change, or by dropping/refiling it. Two gates bracket the mechanical steps; they are what keep a bad rule out of the instruction surface, which is read as ground truth for months after the session that produced it. Gate 1 applies to EVERY closure — its (c) check is what produces `already-done`, and a `dropped` verdict is only trustworthy once you have confirmed the observation really no longer holds. Gate 2 applies whenever an instruction edit actually landed; a `dropped` or `refiled` entry produces no diff to read.
 
 **Gate 1 — verify the proposal before implementing it.** A `## Proposed change` block is a hypothesis, not a spec: it was written at the end of a session, from a partial understanding, by someone who had just been surprised. Before editing any instruction file, confirm at HEAD that (a) every concrete claim it makes — parameter semantics, API shapes, counts, mechanics — holds against the *implementing source*, not against the entry's own narrative; (b) each target file and anchor section it names actually exists; (c) the rule is not already present (→ `already-done`). Where a claim cannot be sourced, codify it as observed rather than asserting or dropping it. Measured over one four-entry pass: three proposals needed a correction, one to its central causal claim, one to a target anchor that did not exist.
 
@@ -96,8 +96,8 @@ Run this when a recurring pattern in `applied/` entries indicates a missing stan
 ## Post-checks
 
 **After OPEN → APPLIED transition:**
-- Both gates ran: the proposal's concrete claims were checked against implementing source, and the codified diff got an adversarial read. A `disposition: applied` reached without them is unverified.
-- The `## Resolution` records any correction the gates forced — a proposal that landed verbatim is the exception, not the norm
+- The `## Resolution` NAMES what Gate 1 was checked against (the implementing file, commit or query) and how Gate 2 was run (self-read of the diff, or delegated to a reviewer) — plus any correction they forced. "Both gates ran" as a bare assertion is unfalsifiable and every closure passes it; the trace is the only thing a later reader can check, and writing it is what makes skipping a gate visible.
+- A proposal that landed verbatim is the exception, not the norm — if the Resolution records no correction at all, say so explicitly rather than leaving the section silent
 - The file exists in `applied/`, not in `open/`
 - Frontmatter has `status: APPLIED`, `applied_date`, `disposition`
 - `## Resolution` section is filled

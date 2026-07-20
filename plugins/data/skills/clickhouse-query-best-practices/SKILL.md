@@ -7,7 +7,7 @@ description: Use when writing or reviewing ad-hoc research SQL in a dbt-ClickHou
 
 # ClickHouse Query Best Practices
 
-How to write idiomatic, readable, performant research SQL in ClickHouse — especially when crossing into PostgreSQL via the `postgresql()` table function. Complementary to `clickhouse-best-practices` (schema/insert) and `composite-types` (type mapping). This skill is about **the SQL you write to investigate**, not about table design.
+How to write idiomatic, readable, performant research SQL in ClickHouse — especially when crossing into PostgreSQL via the `postgresql()` table function. This skill is about **the SQL you write to investigate**, not about table design.
 
 ## When to use
 
@@ -18,10 +18,10 @@ How to write idiomatic, readable, performant research SQL in ClickHouse — espe
 
 ## When NOT to use
 
-- Schema / table design — use plugin `clickhouse-best-practices`
-- dbt SQL inside `models/**` (production) — use plugin `clickhouse-best-practices`; for `.yml` `description:` text + the dbt-score gate see your project's yaml-conventions documentation
-- Type mapping for composite Tuple types — use `composite-types`
-- Pure data-modeling decisions (PK ordering, partitioning) — use plugin `clickhouse-best-practices`
+- Schema / table design - out of scope for this skill
+- dbt SQL inside `models/**` (production) - out of scope; for `.yml` `description:` text + the dbt-score gate see your project's yaml-conventions documentation
+- Type mapping for composite Tuple types - out of scope for this skill
+- Pure data-modeling decisions (PK ordering, partitioning) - out of scope for this skill
 
 ## Rules (read these before writing)
 
@@ -223,7 +223,7 @@ Covers `row_number()` → `limit 1 by`, `case when` → `multiIf` / `map[key]`, 
 | Multi-condition `has(types, 1) and not has(types, 2)` | Cross-tab explosion in `group by` | Rule 05 |
 | Pulling hundreds-of-millions-row fact table through `postgresql()` | Query times out, postgres pegged | Rule 06 |
 | Magic int `where type = 125` with no comment | 6 months later: "what's 125?" | Rule 07 |
-| `count(distinct entity_id)` | Slower than `uniqExact` on large groups | See plugin clickhouse-best-practices |
+| `count(distinct entity_id)` | Slower than `uniqExact` on large groups | Prefer `uniqExact` |
 | `select count() from postgresql(..., table = 'large_table')` | Pulls all rows over the wire | Rule 12 — use CH mirror, PG-side view, or `pg_class.reltuples` |
 | `where x in (select id from postgresql(...))` | IN-subquery does NOT push → PG fetches everything | Rule 12 — materialise CH-side first, then literal IN-list |
 | `where created_at between a and b` against `postgresql()` | BETWEEN does NOT push → PG fetches everything | Rule 12 — rewrite as `>= a and <= b` |

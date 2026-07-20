@@ -315,7 +315,8 @@ When a new skill is created, add a row to the Skills Registry table in `AGENTS.m
 
 ### A skill is production-ready when all of the following are true
 
-- All 7 `SKILL.md` sections are present and non-trivial (no placeholder text, no empty sections)
+- Every section required for the skill's category is present and non-trivial (workflow: all 7;
+  rulebook: the 5 listed above) - no placeholder text, no empty sections
 - All files referenced in `SKILL.md` actually exist at the stated paths
 - `templates/` contains a template for every output type the skill produces
 - `references/index/` contains an index file for every external source the skill needs to navigate

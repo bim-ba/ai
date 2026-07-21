@@ -23,7 +23,6 @@ fails if that copy PASSES. Without it, "the emitted text equals the file" is sat
 that reads the same file, including one that reads it wrongly in both places.
 """
 import json
-import os
 import shutil
 import subprocess
 import sys
@@ -39,11 +38,18 @@ PROTOCOL = HOOKS_DIR / "behaviour-protocol.md"
 MANIFEST = HOOKS_DIR / "hooks.json"
 
 
-def manifest_command():
-    """The SessionStart command string exactly as the harness would run it."""
-    return json.loads(MANIFEST.read_text(encoding="utf-8"))["hooks"]["SessionStart"][0]["hooks"][0][
-        "command"
-    ]
+def manifest_command(expanded=False):
+    """The SessionStart command string; `expanded` substitutes `${CLAUDE_PLUGIN_ROOT}` as the harness does.
+
+    The substitution is done here rather than left to the shell on purpose, and not only because
+    `cmd.exe` does not understand `${VAR}`: the HARNESS expands that placeholder before invoking, so
+    doing it in Python is the faithful reproduction and running it through a POSIX shell would be the
+    approximation.
+    """
+    command = json.loads(MANIFEST.read_text(encoding="utf-8"))["hooks"]["SessionStart"][0]["hooks"][
+        0
+    ]["command"]
+    return command.replace("${CLAUDE_PLUGIN_ROOT}", str(PLUGIN_ROOT)) if expanded else command
 
 
 def load_tests(loader, tests, ignore):
@@ -171,14 +177,13 @@ class BehaviourProtocolHookTests(unittest.TestCase):
         test in this file while injecting nothing, forever.
         """
         done = subprocess.run(
-            manifest_command(),
+            manifest_command(expanded=True),
             shell=True,
             input="{}",
             capture_output=True,
             text=True,
             timeout=120,
             cwd=tempfile.gettempdir(),  # the harness does not run hooks from the plugin directory
-            env={**os.environ, "CLAUDE_PLUGIN_ROOT": str(PLUGIN_ROOT)},
         )
         self.assertEqual(done.returncode, 0, "manifest command failed: " + done.stderr[:400])
         payload = json.loads(done.stdout)

@@ -22,7 +22,6 @@ green run on the current state: the detector is therefore exercised against a sy
 which the defect is genuinely present.
 """
 import json
-import os
 import subprocess
 import sys
 import tempfile
@@ -121,6 +120,9 @@ class DriftLogCheck(unittest.TestCase):
         """
         manifest = json.loads((REPO / "plugins/core/hooks/hooks.json").read_text())
         command = manifest["hooks"]["Stop"][0]["hooks"][0]["command"]
+        # Substitute here rather than leaving it to the shell: the HARNESS expands this placeholder
+        # before invoking, so this is the faithful reproduction - and `cmd.exe` does not grok ${VAR}.
+        command = command.replace("${CLAUDE_PLUGIN_ROOT}", str(REPO / "plugins" / "core"))
         done = subprocess.run(
             command,
             shell=True,
@@ -129,7 +131,6 @@ class DriftLogCheck(unittest.TestCase):
             text=True,
             timeout=120,
             cwd=tempfile.gettempdir(),
-            env={**os.environ, "CLAUDE_PLUGIN_ROOT": str(REPO / "plugins" / "core")},
         )
         self.assertEqual(done.returncode, 0, "manifest command failed: " + done.stderr[:400])
         emitted = json.loads(done.stdout)["hookSpecificOutput"]

@@ -23,3 +23,29 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Run the Python test suite
         run: uv run --no-project python -m unittest discover -s tests -t tests -p "test_*.py" -v
+
+  version-bump:
+    name: plugin content implies a version bump
+    # pull_request only. On a push to `main` the merge base of HEAD with `main` is HEAD itself,
+    # so the diff is empty and the check would pass vacuously - a green tick that means nothing
+    # is worse than no tick. The question "did this bump?" only has a shape on the PR.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The check diffs from the merge base. The default depth-1 checkout has no common
+          # ancestor to find, so `git merge-base` fails - and the check then exits 2 (loud) by
+          # design rather than skipping. 0 = full history, which is what makes it decidable.
+          fetch-depth: 0
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.3.2
+        with:
+          python-version: '3.13'
+      - name: Fail if plugin content moved without a version bump
+        # `--head` defaults to HEAD, which on a pull_request is the refs/pull/N/merge commit -
+        # exactly the tree that would land. The base SHA comes from the event payload, so the
+        # check never depends on how remote-tracking refs happen to be named locally.
+        run: >
+          uv run --no-project python tests/version_bump_check.py
+          --base ${{ github.event.pull_request.base.sha }}

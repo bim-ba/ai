@@ -64,8 +64,9 @@ No `src/`, no domain packages, no `__init__.py` -- one flat directory the manife
     <data>.md            # any text the hook reads, resolved relative to __file__
 ```
 
-Each module still obeys every rule in section 2 -- docstring, stdlib only, stdin payload, error-
-swallowing entrypoint, ASCII. Only the packaging differs.
+Each module still obeys every rule in section 2 -- docstring, stdlib only, error-swallowing
+entrypoint, ASCII, and the stdin payload where the hook gates on one (see the carve-out in rule 4).
+Only the packaging differs.
 
 ---
 
@@ -82,13 +83,23 @@ swallowing entrypoint, ASCII. Only the packaging differs.
    uses bare `python3` where per-event startup cost dominates. `--script` is for a module carrying a
    PEP-723 header and is unnecessary for a stdlib-only hook. Never `uv run` WITHOUT `--no-project`:
    that resolves the project's environment and can install packages mid-session.
-4. **Read the payload from stdin, decide, and emit only if acting.** A PROJECT hook uses the shared
-   `read_payload()` and emit helpers from `utils.py` and imports payload shapes from `models.py`; a
-   plugin hook inlines the same few lines. A hook that decides not to act emits nothing.
+4. **A GATED hook reads the payload from stdin, decides, and emits only if acting.** A PROJECT hook
+   uses the shared `read_payload()` and emit helpers from `utils.py` and imports payload shapes from
+   `models.py`; a plugin hook inlines the same few lines. A hook that decides not to act emits
+   nothing. **Carve-out for an UNCONDITIONAL hook** -- one whose payload is baseline context rather
+   than a nudge (`behaviour_protocol.py` is the example): it reads no stdin and always emits, because
+   there is nothing to decide and a hook that CAN decide not to emit is a hook that can lose that
+   context for a reason nobody chose. Do not add a payload gate to satisfy this rule; state the
+   deviation in the module docstring, and test it per the always-emits paragraph in section 5.
 5. **Run the entrypoint through a wrapper that swallows errors (exit 0).** A hook must never crash a
    tool call or spam stderr. A PROJECT hook uses a single `run(main)` in `utils.py` that catches
-   everything and exits 0; a plugin hook wraps `main()` in its own `try/except Exception: pass`. Either
-   way a broken hook degrades to a no-op, never to a blocked session.
+   everything and exits 0; a plugin hook wraps `main()` in its own `try/except Exception: pass`. A
+   broken hook must never block a session. **Degrading to a NO-OP is the default, not the law:** when
+   the hook's payload is the session's baseline rules, silence means every rule is missing and nobody
+   can tell, so such a hook emits a short loud warning instead of nothing -- still exit 0, still
+   non-blocking. Say so in the docstring, and be precise about the scope: the guarantee holds only
+   once execution reaches the module. A missing `uv`, an unset `${CLAUDE_PLUGIN_ROOT}`, no available
+   interpreter or an expired `timeout` are all silent and no hook code can change that.
 6. **Keep it ASCII** per the file-artifact rule (`->` not smart arrows, `-` not em/en-dash, no section
    sign) -- hook output is injected into the agent's context as plain text.
 7. **Wire it where the hook LIVES, and the form follows from that.** A PROJECT hook goes in
@@ -124,13 +135,20 @@ Same rule, different constraint -- not an exception.
 
 ## 4. Editing hooks safely (the in-session gotcha)
 
-`settings.json` hooks are re-read live during a session. A `PreToolUse` hook that exits non-zero with
-code 2 **blocks** the matched tool, so a broken command (e.g. pointing at a module you just deleted or
-renamed) will block your own `Read` / `Bash` / `Glob` mid-session.
+**PROJECT shape.** `settings.json` hooks are re-read live during a session. A `PreToolUse` hook that
+exits non-zero with code 2 **blocks** the matched tool, so a broken command (e.g. pointing at a module
+you just deleted or renamed) will block your own `Read` / `Bash` / `Glob` mid-session.
 
 When relocating or renaming a hook module, **repoint `settings.json` first, then move/delete the old
 file** -- never the reverse. `Edit` is not matched by tool-gating hooks, so you can always fix
 `settings.json` with `Edit` even if `Read` / `Bash` are currently blocked.
+
+**PLUGIN shape -- the opposite hazard.** A plugin's `hooks.json` is NOT read from your working tree:
+the installed copy lives in a version-keyed cache (`~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`),
+so editing the repo changes nothing in any session, and a version that did not move ships nothing at
+all (see the version-bump rule in `CONTRIBUTING.md`). You therefore cannot break a running session by
+editing a plugin hook -- and you cannot fix one either. Verify a plugin hook by running its module
+directly (section 5), not by editing and watching a session; then bump the version and update.
 
 ---
 

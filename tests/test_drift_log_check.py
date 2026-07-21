@@ -22,6 +22,7 @@ green run on the current state: the detector is therefore exercised against a sy
 which the defect is genuinely present.
 """
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -107,6 +108,33 @@ class DriftLogCheck(unittest.TestCase):
         command = manifest["hooks"]["Stop"][0]["hooks"][0]["command"]
         self.assertIn("drift_log_check.py", command)
         self.assertNotIn("echo ", command)
+        # rule 3 names this: `uv run` without `--no-project` can install packages mid-session.
+        self.assertIn("--no-project", command)
+
+    def test_the_stop_manifest_command_actually_runs(self):
+        """Substring checks cannot see a dead hook.
+
+        `assertNotIn("echo ")` guards only the exact regression that already happened here; a
+        manifest of `true # drift_log_check.py` satisfies every substring assertion above while
+        injecting nothing, which is the shape of the 24-day no-op this file exists to prevent.
+        Executing the command string is what actually closes that hole.
+        """
+        manifest = json.loads((REPO / "plugins/core/hooks/hooks.json").read_text())
+        command = manifest["hooks"]["Stop"][0]["hooks"][0]["command"]
+        done = subprocess.run(
+            command,
+            shell=True,
+            input=json.dumps({"stop_hook_active": False}),
+            capture_output=True,
+            text=True,
+            timeout=120,
+            cwd=tempfile.gettempdir(),
+            env={**os.environ, "CLAUDE_PLUGIN_ROOT": str(REPO / "plugins" / "core")},
+        )
+        self.assertEqual(done.returncode, 0, "manifest command failed: " + done.stderr[:400])
+        emitted = json.loads(done.stdout)["hookSpecificOutput"]
+        self.assertEqual(emitted["hookEventName"], "Stop")
+        self.assertIn("drift-log verdict", emitted["additionalContext"])
 
 
 class PluginVersionParity(unittest.TestCase):

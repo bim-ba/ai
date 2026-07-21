@@ -102,11 +102,40 @@ class DriftLogCheck(unittest.TestCase):
         self.assertEqual(len({invoke(payload) for _ in range(3)}), 1)
 
     def test_wired_into_hooks_json_by_path_not_inline_logic(self):
-        """The authoring standard forbids inline logic in the manifest (section 1)."""
+        """The authoring standard forbids inline logic in the manifest (its opening paragraph)."""
         manifest = json.loads((REPO / "plugins/core/hooks/hooks.json").read_text())
         command = manifest["hooks"]["Stop"][0]["hooks"][0]["command"]
         self.assertIn("drift_log_check.py", command)
         self.assertNotIn("echo ", command)
+        # rule 3 names this: `uv run` without `--no-project` can install packages mid-session.
+        self.assertIn("--no-project", command)
+
+    def test_the_stop_manifest_command_actually_runs(self):
+        """Substring checks cannot see a dead hook.
+
+        `assertNotIn("echo ")` guards only the exact regression that already happened here; a
+        manifest of `true # drift_log_check.py` satisfies every substring assertion above while
+        injecting nothing, which is the shape of the 24-day no-op this file exists to prevent.
+        Executing the command string is what actually closes that hole.
+        """
+        manifest = json.loads((REPO / "plugins/core/hooks/hooks.json").read_text())
+        command = manifest["hooks"]["Stop"][0]["hooks"][0]["command"]
+        # Substitute here rather than leaving it to the shell: the HARNESS expands this placeholder
+        # before invoking, so this is the faithful reproduction - and `cmd.exe` does not grok ${VAR}.
+        command = command.replace("${CLAUDE_PLUGIN_ROOT}", str(REPO / "plugins" / "core"))
+        done = subprocess.run(
+            command,
+            shell=True,
+            input=json.dumps({"stop_hook_active": False}),
+            capture_output=True,
+            text=True,
+            timeout=120,
+            cwd=tempfile.gettempdir(),
+        )
+        self.assertEqual(done.returncode, 0, "manifest command failed: " + done.stderr[:400])
+        emitted = json.loads(done.stdout)["hookSpecificOutput"]
+        self.assertEqual(emitted["hookEventName"], "Stop")
+        self.assertIn("drift-log verdict", emitted["additionalContext"])
 
 
 class PluginVersionParity(unittest.TestCase):

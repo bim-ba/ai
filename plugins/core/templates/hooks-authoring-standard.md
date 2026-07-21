@@ -1,16 +1,34 @@
 # Hooks Authoring Standard
 
-Every Claude Code hook in a project is a standalone, readable module under `.claude/hooks/src/`.
-`.claude/settings.json` only wires an event to a module -- it never carries inline logic.
+Every Claude Code hook is a standalone, readable module. The manifest that wires it -- `settings.json`
+or `hooks.json` -- only points an event at that module; it never carries inline logic.
 
 The goal: you can tell what a hook does, change it, and test it in seconds -- none of which is true for
 a shell/python one-liner escaped inside JSON.
 
+## Two deployment shapes -- read this before section 1
+
+A hook is deployed one of two ways, and the layout, the wiring and the test invocation all follow from
+which. Every section below that shows a `src/` tree, an `__init__.py`, or a `-m <package>.<module>`
+invocation is describing the PROJECT shape; the PLUGIN shape is flat by construction.
+
+| | PROJECT hook | PLUGIN-shipped hook |
+|---|---|---|
+| Lives in | `.claude/hooks/src/<domain>/<hook>.py` | `<plugin>/hooks/<hook>.py` (flat, no package) |
+| Wired by | `.claude/settings.json` | the plugin's `hooks.json` |
+| Addressed as | `-m <package>.<module>` with `PYTHONPATH` | the file path under `${CLAUDE_PLUGIN_ROOT}` |
+| Launcher | bare `python3` (startup cost dominates) | `uv run --no-project python` (uniform interpreter) |
+| Shared `utils.py` / `models.py` | yes | no -- a plugin hook is self-contained stdlib-only |
+
+Why the plugin shape is flat, not a style choice: there is no project `src/` to put on the import path,
+and the plugin must run identically in a project that has no `.claude/hooks/` at all. This plugin's own
+hooks take the plugin shape -- see rule 7 for the wiring and rule 3 for the launcher tradeoff.
+
 ---
 
-## 1. Layout
+## 1. Layout (PROJECT shape)
 
-Hooks are grouped by DOMAIN (not by event), so the tree documents itself:
+Project hooks are grouped by DOMAIN (not by event), so the tree documents itself:
 
 ```
 .claude/hooks/
@@ -27,16 +45,34 @@ Hooks are grouped by DOMAIN (not by event), so the tree documents itself:
       <hook>.py
 ```
 
-- `models.py` / `utils.py` are shared so every hook looks the same and imports the same plumbing.
+- `models.py` / `utils.py` are shared so every PROJECT hook looks the same and imports the same
+  plumbing. A plugin-shipped hook imports neither -- it has no `src/` to import them from, so it
+  carries its own few lines of stdlib plumbing instead.
 - A domain package (e.g. `security/`, `conventions/`, `session/`) holds the hooks for one concern.
 - Data that a hook matches against (phrase lists, tool-name prefixes) lives in a sibling `triggers.json`,
   so tuning behavior is a data edit, not a code edit.
+
+### Layout (PLUGIN shape)
+
+No `src/`, no domain packages, no `__init__.py` -- one flat directory the manifest addresses by path:
+
+```
+<plugin>/
+  hooks/
+    hooks.json           # wires each event to a file under ${CLAUDE_PLUGIN_ROOT}
+    <hook>.py            # one hook module, self-contained, stdlib only
+    <data>.md            # any text the hook reads, resolved relative to __file__
+```
+
+Each module still obeys every rule in section 2 -- docstring, stdlib only, stdin payload, error-
+swallowing entrypoint, ASCII. Only the packaging differs.
 
 ---
 
 ## 2. Rules
 
-1. **One module per hook**, in a domain package under `src/`. Add an `__init__.py` to every package.
+1. **One module per hook.** PROJECT shape: in a domain package under `src/`, with an `__init__.py` in
+   every package. PLUGIN shape: a flat module beside `hooks.json`, no package and no `__init__.py`.
 2. **Start with a module docstring:** which event it binds to, what it decides, why, and a one-line
    `Test:` invocation someone can paste to exercise it.
 3. **Standard library only.** A hook runs on every matching event and must start instantly -- no
@@ -46,12 +82,13 @@ Hooks are grouped by DOMAIN (not by event), so the tree documents itself:
    uses bare `python3` where per-event startup cost dominates. `--script` is for a module carrying a
    PEP-723 header and is unnecessary for a stdlib-only hook. Never `uv run` WITHOUT `--no-project`:
    that resolves the project's environment and can install packages mid-session.
-4. **Read the payload from stdin, decide, and emit only if acting.** Use the shared `read_payload()` and
-   emit helpers from `utils.py`; import payload shapes from `models.py`. A hook that decides not to act
-   emits nothing.
+4. **Read the payload from stdin, decide, and emit only if acting.** A PROJECT hook uses the shared
+   `read_payload()` and emit helpers from `utils.py` and imports payload shapes from `models.py`; a
+   plugin hook inlines the same few lines. A hook that decides not to act emits nothing.
 5. **Run the entrypoint through a wrapper that swallows errors (exit 0).** A hook must never crash a
-   tool call or spam stderr. A single `run(main)` in `utils.py` that catches everything and exits 0 is
-   the pattern -- a broken hook degrades to a no-op, never to a blocked session.
+   tool call or spam stderr. A PROJECT hook uses a single `run(main)` in `utils.py` that catches
+   everything and exits 0; a plugin hook wraps `main()` in its own `try/except Exception: pass`. Either
+   way a broken hook degrades to a no-op, never to a blocked session.
 6. **Keep it ASCII** per the file-artifact rule (`->` not smart arrows, `-` not em/en-dash, no section
    sign) -- hook output is injected into the agent's context as plain text.
 7. **Wire it where the hook LIVES, and the form follows from that.** A PROJECT hook goes in
@@ -99,16 +136,27 @@ file** -- never the reverse. `Edit` is not matched by tool-gating hooks, so you 
 
 ## 5. Testing a hook
 
-Run the module exactly as `settings.json` does (from the project root) and check stdout -- empty output
-means the hook decided not to act:
+Run the module exactly as its own manifest does, and check stdout -- empty output means the hook decided
+not to act. The invocation differs by shape, because the wiring does (rule 7):
 
 ```sh
+# PROJECT shape - dotted module name, src/ on the import path, cwd at the project root
 echo '{"tool_input":{"command":"..."}}' | PYTHONPATH=.claude/hooks/src python3 -m <package>.<module>
+
+# PLUGIN shape - the file by path, exactly as hooks.json addresses it
+echo '{}' | uv run --no-project python plugins/<plugin>/hooks/<hook>.py
 ```
 
 Feed the module a payload that should trigger it and one that should not; assert it emits on the first
 and stays silent on the second. A hook with a `triggers.json` is tested by editing the data and
 re-running -- no code change needed.
+
+A hook that always emits (baseline context rather than a gated nudge) has no silent case to assert, so
+assert the CONTENT instead: compare the emitted `additionalContext` to its source byte-for-byte, not
+with a substring check. The error-swallowing entrypoint in rule 5 turns a failed read into an empty
+emit, and a substring assertion passes on empty just as happily as a missing one -- which is how a hook
+stays silently dead. Then prove the assertion is not vacuous: run it once against a deliberately
+truncated copy of the source and confirm it goes red.
 
 ---
 

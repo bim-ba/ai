@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run --no-project python -c 'import json,sys; print(json.dumps({\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":open(sys.argv[1], encoding=\"utf-8\").read()}}))' \"${CLAUDE_PLUGIN_ROOT}/hooks/behaviour-protocol.md\"",
+            "command": "uv run --no-project python \"${CLAUDE_PLUGIN_ROOT}/hooks/behaviour_protocol.py\"",
             "timeout": 5
           }
         ]

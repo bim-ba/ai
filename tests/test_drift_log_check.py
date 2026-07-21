@@ -102,7 +102,7 @@ class DriftLogCheck(unittest.TestCase):
         self.assertEqual(len({invoke(payload) for _ in range(3)}), 1)
 
     def test_wired_into_hooks_json_by_path_not_inline_logic(self):
-        """The authoring standard forbids inline logic in the manifest (section 1)."""
+        """The authoring standard forbids inline logic in the manifest (its opening paragraph)."""
         manifest = json.loads((REPO / "plugins/core/hooks/hooks.json").read_text())
         command = manifest["hooks"]["Stop"][0]["hooks"][0]["command"]
         self.assertIn("drift_log_check.py", command)

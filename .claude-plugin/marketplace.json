@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
   "name": "ai",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "owner": { "name": "bim-ba", "email": "careless.sava@gmail.com" },
   "plugins": [
     { "name": "core", "source": "./plugins/core", "description": "Generic agent behavior + reusable skills + /setup scaffolder for any project." },

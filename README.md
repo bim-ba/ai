@@ -16,7 +16,7 @@ A Claude Code plugin marketplace providing reusable agent behavior, project scaf
 
 ## Requirements
 
-- [`uv`](https://docs.astral.sh/uv/) — **required** for Claude Code. The `core` SessionStart hook and the `/setup` scripts run Python through `uv run`. Without `uv`, both `core` hooks are skipped -- the SessionStart behaviour-protocol injection AND the Stop drift-log reminder (the session still works, silently).
+- [`uv`](https://docs.astral.sh/uv/) — **required** for Claude Code. The `core` SessionStart hook and the `/setup` scripts run Python through `uv run`. Without `uv`, all three `core` hooks are skipped -- the two SessionStart injections (the behaviour-protocol AND the open-drift-log surfacer) and the Stop drift-log reminder (the session still works, silently).
 - **Claude Code** — install via the marketplace (below).
 
 ## Install
@@ -56,6 +56,7 @@ A Claude Code plugin marketplace providing reusable agent behavior, project scaf
 | Hook | What it does | When |
 |------|--------------|------|
 | `SessionStart` | Injects the `core` behaviour protocol (`behaviour-protocol.md`) as baseline conventions for the session. | Every session / subagent start |
+| `SessionStart` | Surfaces the project's unresolved `.claude/drift-log/open/` entries into context so they are read before the first dispatch; silent when there are none. | Every session / subagent start |
 | `Stop` | Reminds the agent to scan the last turn against the 8 drift triggers and log an entry if any fired. | When the agent finishes a turn |
 
 ## Quickstart

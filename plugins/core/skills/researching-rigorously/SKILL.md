@@ -44,13 +44,27 @@ Stop as soon as a source settles the question; escalate only if it doesn't. Alwa
 
 ## Parallel fan-out
 
-When the question splits into independent sub-questions or distinct sources (e.g. "how is X documented in the catalog?" vs "what does the spec say?" vs "what does the code actually do?"), dispatch **one subagent per source/place in a single message** (see `superpowers:dispatching-parallel-agents`). Keep on the orchestrator: any single-browser-session tool (Playwright) and any concurrency-1 data tools. Subagents cannot write files -- they return inline; the orchestrator writes.
+When the question splits into independent sub-questions or distinct sources (e.g. "how is X documented in the catalog?" vs "what does the spec say?" vs "what does the code actually do?"), dispatch **one subagent per source/place** (see `superpowers:dispatching-parallel-agents`) -- in a single message when the set is small, otherwise in the affordable waves the first guard below prescribes. Keep on the orchestrator: any single-browser-session tool (Playwright) and any concurrency-1 data tools.
+
+Independence licenses parallelism; it does NOT set the batch size. Each guard below is a failure this discipline actually paid for, so treat them as load-bearing, not optional:
+
+- **Dispatch in waves you can afford to lose, not one burst sized to the problem.** A provider rate-limit can terminate a dozen in-flight agents at once; a wave of ~3-5 with the rest queued survives it, one burst of 12 does not.
+- **The orchestrator owns the concurrency budget.** Every dispatch prompt states whether that subagent may fan out further -- default NO. A subagent cannot see its siblings, so an unstated licence makes realised concurrency multiply per level (12 agents each re-applying "parallelize" = ~144, not 12).
+- **Subagents write substantial output INCREMENTALLY to a scratch/artifacts path, never buffering to one final write.** In THIS harness subagents CAN write files -- use it. An agent can be killed at any moment (rate limit, user stop), so whatever it has established must already be on disk; this is durability, not merely a way to dodge the HTML-escaping of an inline return. Scope the writes via the agent's system prompt ("only under `artifacts/`"), not a tool ban.
+- **A content-emitting agent is bounded by the 64k OUTPUT-token limit, because tool-call arguments are model output.** For bulk uploads, page/record creation, or many-file writes, size by total payload bytes, not item count (~40-50k output tokens of payload max, roughly 4 large docs), and shard the rest across siblings. Being terse does not help -- the payload is the cost, not the commentary.
+- **A paginating or scraping agent gets a HARD cap (N pages / N items), never "until exhausted."** A rate-limited endpoint turns "until exhausted" into an unbounded backoff loop the agent will not exit on its own (it reads 429/lockout as "wait and retry," and may spin up a monitor to keep resuming). Set the cap from the value curve, tell it to STOP at the cap and record that it hit it; incremental writes keep the partial yield safe.
+- **When 3+ agents in one fan-out need the same invariant** (domain profile, source-diversification rules, output schema, security guardrails), write it ONCE to a versioned repo file each prompt reads first, and keep only the agent-specific task in the prompt. Self-contained means *reachable*, not inlined -- twelve inlined copies cannot absorb a mid-run correction, so the corrected and uncorrected agents silently disagree on their base facts.
+- **A constraint discovered after a fan-out has launched is retrofittable** -- SendMessage it to every live agent rather than letting the batch run un-constrained or killing and re-dispatching; messages land at the agent's next tool round.
+
+For research whose findings are small, the simplest shape still holds: subagents return inline (HTML-escaped -- decode before the orchestrator writes), and the orchestrator reconciles and writes the one durable artifact.
 
 ## Cross-validation + citation
 
 - Never let a single source settle a load-bearing claim if a second independent source is cheap. Confirm absence findings with a positive enumeration + a second source (a count from a catalog is not proof).
 - Distinguish "confirmed", "refuted", and "couldn't verify (tool missing/unavailable)".
 - Cite the exact source for every load-bearing claim: `file:line`, URL, wiki pageId, graph node, or the MCP + query used.
+- **A RENDERED deliverable is validated by what a renderer produces, not what the build wrote.** For an HTML page / dashboard / diagram / notebook, a green build proves nothing about the DOM: serve it, load it in a browser, and assert on the rendered result -- element counts, the values actually displayed, and the effect of each interactive control. Encoding (a missing `<meta charset>`), load-time script errors and event handlers are invisible to every file-level check.
+- **Check aggregate pipelines at their EXTREMES, not their averages.** Read the top and bottom of the sorted output and ask whether each row is real. A median is insensitive to exactly the mislabelled and mis-coerced rows a field-mapping bug produces, so a plausible summary statistic is no evidence the mapping is right.
 
 ## Known pitfalls (general)
 
